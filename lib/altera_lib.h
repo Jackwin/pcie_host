@@ -20,6 +20,85 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+//------------------------- Altera DMA parameters ------------------------------------------
+#define ALTERA_DMA_BAR_NUM (6)
+#define ALTERA_DMA_DESCRIPTOR_NUM 128
+
+#define ALTERA_DMA_WR_DMA_CTRL          0x0000
+#define ALTERA_DMA_WR_DESC_STATUS       0x0004
+#define ALTERA_DMA_WR_RC_DESC_BASE_LOW  0x0008
+#define ALTERA_DMA_WR_RC_DESC_BASE_HIGH 0x000C
+#define ALTERA_DMA_WR_LAST_DESC_IDX     0x0010
+#define ALTERA_DMA_WR_EP_DESC_BASE_LOW  0x0014
+#define ALTERA_DMA_WR_EP_DESC_BASE_HIGH 0x0018
+#define ALTERA_DMA_WR_DMA_PERF          0x001C
+
+#define ALTERA_DMA_RD_DMA_CTRL          0x0100
+#define ALTERA_DMA_RD_DESC_STATUS       0x0104
+#define ALTERA_DMA_RD_RC_DESC_BASE_LOW  0x0108
+#define ALTERA_DMA_RD_RC_DESC_BASE_HIGH 0x010C
+#define ALTERA_DMA_RD_LAST_DESC_IDX     0x0110
+#define ALTERA_DMA_RD_EP_DESC_BASE_LOW  0x0114
+#define ALTERA_DMA_RD_EP_DESC_BASE_HIGH 0x0118
+#define ALTERA_DMA_RD_DMA_PERF          0x011C
+
+#define ALTERA_LITE_DMA_RD_RC_LOW_SRC_ADDR      0x0000
+#define ALTERA_LITE_DMA_RD_RC_HIGH_SRC_ADDR     0x0004
+#define ALTERA_LITE_DMA_RD_CTLR_LOW_DEST_ADDR   0x0008
+#define ALTERA_LITE_DMA_RD_CTRL_HIGH_DEST_ADDR  0x000C
+#define ALTERA_LITE_DMA_RD_LAST_PTR             0x0010
+
+#define ALTERA_LITE_DMA_WR_RC_LOW_SRC_ADDR      0x0100
+#define ALTERA_LITE_DMA_WR_RC_HIGH_SRC_ADDR     0x0104
+#define ALTERA_LITE_DMA_WR_CTLR_LOW_DEST_ADDR   0x0108
+#define ALTERA_LITE_DMA_WR_CTRL_HIGH_DEST_ADDR  0x010C
+#define ALTERA_LITE_DMA_WR_LAST_PTR             0x0110
+
+#define ALTERA_EPLAST_DIFF              1
+
+#define ALTERA_DMA_NUM_DWORDS           512
+
+// On-chip 4KB FIFO 0x0000_0000_0800_0000 - 0x0000_0000_0800_ffff
+#define ONCHIP_MEM_BASE_ADDR_HI         0x00000000
+#define ONCHIP_MEM_BASE_ADDR_LOW        0x00008000
+#define ONCHIP_MEM_DESC_MEM_BASE        0x0000
+
+//DDR3 128MB 0x0000_0000_0000_0000 - 0x0000_0000_07ff_ffff
+#define DDR_MEM_BASE_ADDR_HI            0x00000000
+#define DDR_MEM_BASE_ADDR_LOW           0x00000000
+#define RD_CTRL_BUF_BASE_LOW            0x80000000
+#define RD_CTRL_BUF_BASE_HI             0x0000
+#define WR_CTRL_BUF_BASE_LOW            0x80002000
+#define WR_CTRL_BUF_BASE_HI             0x0000
+
+struct dma_descriptor {
+    WORD src_addr_low;
+    WORD src_addr_high;
+    WORD dest_addr_low;
+    WORD dest_addr_high;
+    WORD ctl_dma_len;
+    WORD reserved[3];
+} __attribute__ ((packed));
+
+struct dma_header {
+    u32 eplast;
+    u32 reserved[7];
+} __attribute__ ((packed));
+
+struct dma_desc_table {
+    struct dma_header header;
+    struct dma_descriptor descriptors[ALTERA_DMA_DESCRIPTOR_NUM];
+} __attribute__ ((packed));
+
+struct lite_dma_header {
+    volatile u32 flags[128];
+} __attribute__ ((packed));
+
+
+struct lite_dma_desc_table {
+    struct lite_dma_header header;
+    struct dma_descriptor descriptors[ALTERA_DMA_DESCRIPTOR_NUM];
+} __attribute__ ((packed));
 
 enum { ALTERA_DEFAULT_VENDOR_ID = 0x1172 };
 enum { ALTERA_DEFAULT_DEVICE_ID = 0x0004 };
@@ -125,4 +204,4 @@ enum {
 #endif
 
 #endif
- 
+

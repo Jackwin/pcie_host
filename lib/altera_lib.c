@@ -665,27 +665,54 @@ BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, DWORD dwVendorID, DWORD dwDevic
     */
 }
 
-BOOL SetDescriptorTable(ALTERA_HANDLE *phAltera) {
+dma_desc_table *SetDescriptorTable(ALTERA_HANDLE *phAltera, BYTE *buffer_virt_addr, DWORD dwSize) {
 
-    ALTERA_DT des_table_ptr = (ALTERA_DT)malloc(sizeof(ALTERA_DT));
-    des_table_ptr = NULL;
-    BZERO(*des_table_ptr);
-    // DDR3 addr in Qsys
-    des_table_ptr->descriptor[0].src_addr_low = 0x00000000;
-    des_table_ptr->descriptor[0].src_addr_high = 0x0000000;
-    // Host memory addr
-    des_table_ptr->descriptor[0].des_addr_low = 0x80000000;
-    des_table_ptr->descriptor[0].des_addr_high = 0xc0000000;
+
+    dma_desc_table *dma_desc_table_ptr;
+    dma_desc_table_ptr = (dma_desc_table)malloc(sizeof(dma_desc_table));
+    BZERO(&des_table_ptr);
+
+    // READ DMA -> Move data from CPU to FPGA
+    // Virtual data buffer address in CPU
+    dma_desc_table_ptr->descriptors[0].src_addr_low = buffer_virt_addr & 0xffffffff;
+    dma_desc_table_ptr->descriptors[0].src_addr_high = (buffer_virt_addr >> 32) & 0xffffffff;
+
+    // DDR3 address on FPGA
+    des_table_ptr->descriptor[0].des_addr_low = DDR_MEM_BASE_ADDR_LOW;
+    des_table_ptr->descriptor[0].des_addr_high = DDR_MEM_BASE_ADDR_HI;
     // Descriptor ID is 0 and DMA size is 64KB
-    des_table_ptr->descriptor[0].id_dma_length = 0x00004000;
+    des_table_ptr->descriptor[0].ctl_dma_len = dwSize;
 
-    des_table_ptr->descriptor[0].rsv1 = 0;
-    des_table_ptr->descriptor[0].rsv2 = 0;
-    des_table_ptr->descriptor[0].rsv3 = 0;
+    des_table_ptr->descriptor[0].reserved[0] = 0;
+    des_table_ptr->descriptor[0].reserved[1] = 0;
+    des_table_ptr->descriptor[0].reserved[2] = 0;
 
-    ALTERA_WritePCIReg(phAltera, 0, des_table_ptr);
+    return dma_desc_table_ptr;
+}
 
-    UINT32 val = ALTERA_ReadPCIReg(phAltera, 0);
-    printf("val is %d", val);
-    return TRUE;
+BOOL SetDMADescController(ALTERA_HANDLE *phAltera, dma_desc_table *dma_desc_table_ptr) {
+    void ALTERA_WriteWord(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
+    DWORD dwOffset, WORD data)
+    // Program the address of descriptor table to DMA descriptor controller
+    WORD dma_desc_table_addr_high = (dma_desc_table_ptr >> 32) & 0xffffffff;
+    WORD dma_desc_table_addr_low = dma_desc_table_ptr & 0xffffffff;
+    ALTERA_WriteWord(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_LOW_SRC_ADDR,dma_desc_table_addr_low);
+    ALTERA_WriteWord(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_HIGH_SRC_ADDR,dma_desc_table_addr_high);
+
+    // Program the on-chip FIFO address to DMA Descriptor Controller, This is the address to which the DMA
+    // Descriptor Controller will copy the status and descriptor table from CPU
+    ALTERA_WriteWord(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTLR_LOW_DEST_ADDR,ONCHIP_MEM_BASE_ADDR_LOW);
+    ALTERA_WriteWord(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTLR_HIGH_DEST_ADDR,ONCHIP_MEM_BASE_ADDR_HIGH);
+
+    // Start DMA
+    ALTERA_WriteWord(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR,0);
+
+}
+
+static int set_lite_table_header(struct lite_dma_header *header)
+{
+    int i;
+    for (i = 0; i < 128; i++)
+        header->flags[i] = 0x00;
+    return 0;
 }
