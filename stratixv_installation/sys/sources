@@ -1,0 +1,14 @@
+# The sources for the stratixV device driver:
+
+TARGETNAME=stratixV
+TARGETTYPE=DRIVER
+TARGETPATH=obj
+NO_SAFESEH=1
+INCLUDES=$(WD_BASEDIR)\include;$(WD_BASEDIR)
+TARGETLIBS= \
+    C:\WinDriver\lib\windrvr6.lib \
+    $(DDK_LIB_PATH)\hotpatch.obj\
+$(DDK_LIB_PATH)\BufferOverflowK.lib\
+$(DDK_LIB_PATH)\hal.lib \$(DDK_LIB_PATH)\ntoskrnl.lib \
+$(DDK_LIB_PATH)\usbd.lib
+SOURCES= stratixV.rc

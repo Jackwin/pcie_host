@@ -65,7 +65,7 @@ DWORD ALTERA_CountCards(DWORD dwVendorID, DWORD dwDeviceID)
     ALTERA_ErrorString[0] = '\0';
     hWD = WD_Open();
     /* Check if handle valid & version OK */
-    if (hWD==INVALID_HANDLE_VALUE) 
+    if (hWD==INVALID_HANDLE_VALUE)
     {
         sprintf(ALTERA_ErrorString, "Failed opening " WD_PROD_NAME " device\n");
         return 0;
@@ -73,7 +73,7 @@ DWORD ALTERA_CountCards(DWORD dwVendorID, DWORD dwDeviceID)
 
     BZERO(ver);
     WD_Version(hWD,&ver);
-    if (ver.dwVer<WD_VER) 
+    if (ver.dwVer<WD_VER)
     {
         sprintf(ALTERA_ErrorString, "Incorrect " WD_PROD_NAME " version\n");
         WD_Close(hWD);
@@ -179,7 +179,7 @@ BOOL ALTERA_Open(ALTERA_HANDLE *phALTERA, DWORD dwVendorID, DWORD dwDeviceID,
 
 Exit:
     /* Error during Open */
-    if (hALTERA->cardReg.hCard) 
+    if (hALTERA->cardReg.hCard)
         WD_CardUnregister(hALTERA->hWD, &hALTERA->cardReg);
     if (hALTERA->hWD!=INVALID_HANDLE_VALUE)
         WD_Close(hALTERA->hWD);
@@ -194,7 +194,7 @@ void ALTERA_Close(ALTERA_HANDLE hALTERA)
         ALTERA_IntDisable(hALTERA);
 
     /* Unregister card */
-    if (hALTERA->cardReg.hCard) 
+    if (hALTERA->cardReg.hCard)
         WD_CardUnregister(hALTERA->hWD, &hALTERA->cardReg);
 
     /* Close WinDriver */
@@ -267,7 +267,7 @@ BOOL ALTERA_DetectCardElements(ALTERA_HANDLE hALTERA)
     /* Check that at least one memory space was found */
     for (i = 0; i<ALTERA_ITEMS; i++)
         if (ALTERA_IsAddrSpaceActive(hALTERA, (ALTERA_ADDR) i)) break;
-    if (i==ALTERA_ITEMS) 
+    if (i==ALTERA_ITEMS)
         return FALSE;
     return TRUE;
 }
@@ -513,7 +513,7 @@ BOOL ALTERA_DMAWait(ALTERA_HANDLE hALTERA)
             break;
         }
 
-        if (dwDMAISR & ERROR_PENDING) 
+        if (dwDMAISR & ERROR_PENDING)
         {
             sprintf(ALTERA_ErrorString, "hardware dma failure\n");
             break;
@@ -575,7 +575,7 @@ BOOL ALTERA_DMAChainTransfer(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr,
     }
     ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, ALTERA_REG_DMALAR, dwLocalAddr);
     ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, ALTERA_REG_DMACSR, DMACsr); /* this starts the dma */
-                                                                             
+
     return ALTERA_DMAWait(hALTERA);
 }
 
@@ -584,7 +584,7 @@ BOOL ALTERA_DMABlockTransfer(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr,
 {
     DWORD i, dwTotalBytes = 0;
     UINT32 DMACsr;
-    
+
     DMACsr = (fFromDev ? DIRECTION : 0)
         | DMA_ENABLE | TRXCOMPINTDIS | INTERRUPT_ENABLE;
 
@@ -630,4 +630,62 @@ BOOL ALTERA_DMAReadWriteBlock(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr,
     ALTERA_DMAUnlock(hALTERA, &dma);
     return fOk;
 }
+//---------------------------- Usr Application -------------------------------------------------------
+BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, DWORD dwVendorID, DWORD dwDeviceID) {
 
+    ALTERA_HANDLE hAltera = (ALTERA_HANDLE)malloc(sizeof(ALTERA_STRUCT));
+    hAltera = NULL;
+    //BZERO(*hAltera);
+    DWORD dwCardNum = ALTERA_CountCards(dwVendorID, dwDeviceID);
+    if (dwCardNum == 0) {
+        printf("No cards found.\n");
+        return FALSE;
+    }
+    BOOL status = ALTERA_Open(&hAltera, dwVendorID, dwDeviceID, dwCardNum - 1);
+    if (!status) {
+        printf("Fail to open the device.\n");
+        return FALSE;
+    }
+
+
+    printf("Bus No. is %2ld, slot is %2ld, and function is %2ld\n",
+        hAltera->pciSlot.dwBus, hAltera->pciSlot.dwSlot, hAltera->pciSlot.dwFunction);
+    phAltera = hAltera;
+    /*
+    for (DWORD i = 0; i < dwCardNum; i++) {
+    printf("\n");
+    printf("%2ld. Vendor ID: 0x%lX, Device ID: 0x%lX\n",
+    i + 1,
+    phAltera->deviceId[i].dwVendorId,
+    phAltera->deviceId[i].dwDeviceId);
+
+    WDC_DIAG_PciDeviceInfoPrint(phAltera->deviceSlot[i], FALSE);
+    }
+    return TRUE;
+    */
+}
+
+BOOL SetDescriptorTable(ALTERA_HANDLE *phAltera) {
+
+    ALTERA_DT des_table_ptr = (ALTERA_DT)malloc(sizeof(ALTERA_DT));
+    des_table_ptr = NULL;
+    BZERO(*des_table_ptr);
+    // DDR3 addr in Qsys
+    des_table_ptr->descriptor[0].src_addr_low = 0x00000000;
+    des_table_ptr->descriptor[0].src_addr_high = 0x0000000;
+    // Host memory addr
+    des_table_ptr->descriptor[0].des_addr_low = 0x80000000;
+    des_table_ptr->descriptor[0].des_addr_high = 0xc0000000;
+    // Descriptor ID is 0 and DMA size is 64KB
+    des_table_ptr->descriptor[0].id_dma_length = 0x00004000;
+
+    des_table_ptr->descriptor[0].rsv1 = 0;
+    des_table_ptr->descriptor[0].rsv2 = 0;
+    des_table_ptr->descriptor[0].rsv3 = 0;
+
+    ALTERA_WritePCIReg(phAltera, 0, des_table_ptr);
+
+    UINT32 val = ALTERA_ReadPCIReg(phAltera, 0);
+    printf("val is %d", val);
+    return TRUE;
+}

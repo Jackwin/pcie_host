@@ -1,0 +1,51 @@
+The DriverWizard has created:
+* A Kernel PlugIn driver project kp_stratixv.sys, which demonstrates how to communicate with your hardware directly from the kernel mode.
+* A sample diagnostics application for testing the communication with
+  your hardware from the user mode.
+* Library files, which include API for controling your hardware and communicating between the user-mode application and Kernel PlugIn driver.
+ The library is used by both the user-mode application and the Kernel PlugIn project
+
+  E:/chunjie/fast-wps/pcie/pcie_statixV/stratixv_files.txt
+         A detailed overview of all the generated files.
+
+  E:/chunjie/fast-wps/pcie/pcie_statixV/stratixv_lib.h
+         A library for controlling your hardware through WinDriver.
+
+  E:/chunjie/fast-wps/pcie/pcie_statixV/stratixv_lib.c
+         Contains the implementation of the functions used for
+         accessing each of the resources defined in the Wizard.
+
+  E:/chunjie/fast-wps/pcie/pcie_statixV/stratixv_diag.c
+         The sample user-mode application which diagnoses your
+         hardware using the stratixv_lib.h library.
+
+  E:/chunjie/fast-wps/pcie/pcie_statixV/kermode/kp_stratixv.c
+         The Kernel-Plugin source code.
+
+  E:/chunjie/fast-wps/pcie/pcie_statixV/x86/msdev_2010/stratixv_diag.sln
+         Microsoft Developer Studio Solution File
+         for the X86 (Win32) Platform.
+
+  E:/chunjie/fast-wps/pcie/pcie_statixV/x86/msdev_2010/stratixv_diag.vcxproj
+         Microsoft Developer Studio 10.0 (.NET 2010) Project File
+         for the X86 (Win32) Platform.
+
+ E:/chunjie/fast-wps/pcie/pcie_statixV/kermode/x86/msdev_2010/kp_stratixv.vcxproj
+         Microsoft Developer Studio 10.0 (.NET 2010) Project File
+         for the Kernel PlugIn.
+
+  E:/chunjie/fast-wps/pcie/pcie_statixV/stratixv.inf
+         A formatted reference file for Windows that contains
+         information about installation files and devices, such as
+         filenames, version information and so on.
+
+Compiling this project:
+  For MSDEV.NET 2010, open Visual Studio 2010 .NET, load x86\msdev_2010\stratixv_diag.sln and compile
+
+Converting to a GUI application:
+  This sample was written as a console mode application (rather than
+  a GUI application) that uses standard input and standard output.
+  This was done in order to simplify the source code. You may change it
+  into a GUI application by removing all calls to printf() and scanf()
+  functions, and calling MessageBox() instead.
+
