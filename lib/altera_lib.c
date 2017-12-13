@@ -722,13 +722,14 @@ BOOL SetDMADescController(ALTERA_HANDLE *phAltera, struct dma_desc_table *dma_de
 }
 
 
-
 BOOL ALTERA_DMAReadBlock(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr,
     PVOID pBuffer, BOOL fFromDev, DWORD dwBytes, BOOL fChained, dma_desc_table *dma_desc_table_ptr) {
 
     BOOL status = FALSE;
     struct altera_pcie_dma_bookkeep *bk_ptr;
     bk_ptr = InitDMABk();
+    BYTE *rp_rd_buffer_virt_addr = bk_ptr->rp_rd_buffer_virt_addr;
+    BYTE *rp_wr_buffer_virt_addr = bk_ptr->rp_wr_buffer_virt_addr;
     WD_DMA dma;
 
     if (dwBytes == 0)
@@ -742,6 +743,12 @@ BOOL ALTERA_DMAReadBlock(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr,
     //Set descriptor[0]
     BZERO(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptor[0]);
     SetReadDesc(bk_ptr->lite_table_rd_cpu_virt_addr->descriptor[0], (DWORD)pDMA->Page[0].pPhysicalAddr,dest_addr, 0x00081000,0); // length is 16KB
+    //Initiate the wr_buffer and rd_buffer data
+    memset(rp_rd_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords *4);
+    init_rp_mem(rp_rd_buffer_virt_addr,bk_ptr->dma_status.altera_dma_num_dwords);
+
+    memset(rp_wr_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords *4);
+    init_rp_mem(rp_wr_buffer_virt_addr,bk_ptr->dma_status.altera_dma_num_dwords);
     SetDMADescController(hALTERA, dma_desc_table_ptr);
 
 }
@@ -781,4 +788,16 @@ struct altera_pcie_dma_bookkeep *InitDMABk() {
 
     return bk;
 
+}
+
+WORD init_rp_mem(BYTE *rp_buffer_virt_addr, DWORD num_dword)
+{
+    WORD i = 0;
+    //u32 increment_value = 0;
+    WORD tmp_rand;
+    for (i = 0; i < num_bytes; i++) {
+        tmp_rand = rand();
+       *((*DWORD)rp_buffer_virt_addr+i) = tmp_rand;
+    }
+    return 0;
 }
