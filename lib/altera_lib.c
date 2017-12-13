@@ -26,7 +26,7 @@ typedef struct
 
 typedef struct
 {
-    DWORD index;
+    u32 index;
     BOOL  fIsMemory;
     BOOL  fActive;
 } ALTERA_ADDR_DESC;
@@ -55,12 +55,12 @@ BOOL ALTERA_DetectCardElements(ALTERA_HANDLE hALTERA);
  * Return Value:
  *   the number of PCI cards found.
  **/
-DWORD ALTERA_CountCards(DWORD dwVendorID, DWORD dwDeviceID)
+u32 ALTERA_CountCards(u32 dwVendorID, u32 dwDeviceID)
 {
     WD_VERSION ver;
     WD_PCI_SCAN_CARDS pciScan;
     HANDLE hWD = INVALID_HANDLE_VALUE;
-    DWORD dwStatus;
+    u32 dwStatus;
 
     ALTERA_ErrorString[0] = '\0';
     hWD = WD_Open();
@@ -95,15 +95,15 @@ DWORD ALTERA_CountCards(DWORD dwVendorID, DWORD dwDeviceID)
     return pciScan.dwCards;
 }
 
-BOOL ALTERA_Open(ALTERA_HANDLE *phALTERA, DWORD dwVendorID, DWORD dwDeviceID,
-    DWORD nCardNum)
+BOOL ALTERA_Open(ALTERA_HANDLE *phALTERA, u32 dwVendorID, u32 dwDeviceID,
+    u32 nCardNum)
 {
     ALTERA_HANDLE hALTERA = (ALTERA_HANDLE) malloc(sizeof(ALTERA_STRUCT));
 
     WD_VERSION ver;
     WD_PCI_SCAN_CARDS pciScan;
     WD_PCI_CARD_INFO pciCardInfo;
-    DWORD dwStatus;
+    u32 dwStatus;
 
     *phALTERA = NULL;
     ALTERA_ErrorString[0] = '\0';
@@ -203,7 +203,7 @@ void ALTERA_Close(ALTERA_HANDLE hALTERA)
     free(hALTERA);
 }
 
-void ALTERA_WritePCIReg(ALTERA_HANDLE hALTERA, DWORD dwReg, UINT32 dwData)
+void ALTERA_WritePCIReg(ALTERA_HANDLE hALTERA, u32 dwReg, UINT32 dwData)
 {
     WD_PCI_CONFIG_DUMP pciCnf;
 
@@ -216,7 +216,7 @@ void ALTERA_WritePCIReg(ALTERA_HANDLE hALTERA, DWORD dwReg, UINT32 dwData)
     WD_PciConfigDump(hALTERA->hWD,&pciCnf);
 }
 
-UINT32 ALTERA_ReadPCIReg(ALTERA_HANDLE hALTERA, DWORD dwReg)
+UINT32 ALTERA_ReadPCIReg(ALTERA_HANDLE hALTERA, u32 dwReg)
 {
     WD_PCI_CONFIG_DUMP pciCnf;
     UINT32 dwVal;
@@ -233,8 +233,8 @@ UINT32 ALTERA_ReadPCIReg(ALTERA_HANDLE hALTERA, DWORD dwReg)
 
 BOOL ALTERA_DetectCardElements(ALTERA_HANDLE hALTERA)
 {
-    DWORD i;
-    DWORD ad_sp;
+    u32 i;
+    u32 ad_sp;
 
     BZERO(hALTERA->Int);
     BZERO(hALTERA->addrDesc);
@@ -284,7 +284,7 @@ void ALTERA_GetPciSlot(ALTERA_HANDLE hALTERA, WD_PCI_SLOT *pPciSlot)
 
 /* General read/write function */
 void ALTERA_ReadWriteBlock(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
-    DWORD dwOffset, BOOL fRead, PVOID buf, DWORD dwBytes, ALTERA_MODE mode)
+    u32 dwOffset, BOOL fRead, PVOID buf, u32 dwBytes, ALTERA_MODE mode)
 {
     WD_TRANSFER trans;
     BOOL fMem = hALTERA->addrDesc[addrSpace].fIsMemory;
@@ -325,7 +325,7 @@ void ALTERA_ReadWriteBlock(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
 }
 
 BYTE ALTERA_ReadByte(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
-    DWORD dwOffset)
+    u32 dwOffset)
 {
     BYTE data;
     if (hALTERA->addrDesc[addrSpace].fIsMemory)
@@ -341,10 +341,10 @@ BYTE ALTERA_ReadByte(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
     return data;
 }
 
-WORD ALTERA_ReadWord(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
-    DWORD dwOffset)
+u16 ALTERA_ReadWord(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
+    u32 dwOffset)
 {
-    WORD data;
+    u16 data;
     if (hALTERA->addrDesc[addrSpace].fIsMemory)
     {
         PWORD pData = (PWORD)(hALTERA->cardReg.Card.Item[hALTERA->addrDesc[addrSpace].index].I.Mem.dwUserDirectAddr + dwOffset);
@@ -353,13 +353,13 @@ WORD ALTERA_ReadWord(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
     else
     {
         ALTERA_ReadWriteBlock(hALTERA, addrSpace, dwOffset, TRUE, &data,
-            sizeof(WORD), ALTERA_MODE_WORD);
+            sizeof(u16), ALTERA_MODE_WORD);
     }
     return data;
 }
 
 UINT32 ALTERA_ReadDword(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
-    DWORD dwOffset)
+    u32 dwOffset)
 {
     UINT32 data;
     if (hALTERA->addrDesc[addrSpace].fIsMemory)
@@ -376,7 +376,7 @@ UINT32 ALTERA_ReadDword(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
 }
 
 void ALTERA_WriteByte(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
-    DWORD dwOffset, BYTE data)
+    u32 dwOffset, BYTE data)
 {
     if (hALTERA->addrDesc[addrSpace].fIsMemory)
     {
@@ -391,7 +391,7 @@ void ALTERA_WriteByte(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
 }
 
 void ALTERA_WriteWord(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
-    DWORD dwOffset, WORD data)
+    u32 dwOffset, u16 data)
 {
     if (hALTERA->addrDesc[addrSpace].fIsMemory)
     {
@@ -401,12 +401,12 @@ void ALTERA_WriteWord(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
     else
     {
         ALTERA_ReadWriteBlock(hALTERA, addrSpace, dwOffset, FALSE, &data,
-            sizeof(WORD), ALTERA_MODE_WORD);
+            sizeof(u16), ALTERA_MODE_WORD);
     }
 }
 
 void ALTERA_WriteDword(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
-    DWORD dwOffset, UINT32 data)
+    u32 dwOffset, UINT32 data)
 {
     if (hALTERA->addrDesc[addrSpace].fIsMemory)
     {
@@ -416,7 +416,7 @@ void ALTERA_WriteDword(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
     else
     {
         ALTERA_ReadWriteBlock(hALTERA, addrSpace, dwOffset, FALSE, &data,
-            sizeof(DWORD), ALTERA_MODE_DWORD);
+            sizeof(u32), ALTERA_MODE_DWORD);
     }
 }
 
@@ -440,7 +440,7 @@ void DLLCALLCONV ALTERA_IntHandler(PVOID pData)
 BOOL ALTERA_IntEnable(ALTERA_HANDLE hALTERA, ALTERA_INT_HANDLER funcIntHandler)
 {
     ALTERA_ADDR addrSpace;
-    DWORD dwStatus;
+    u32 dwStatus;
 
     /* Check if interrupt is already enabled */
     if (hALTERA->Int.hThread)
@@ -501,11 +501,11 @@ void ALTERA_IntDisable(ALTERA_HANDLE hALTERA)
 BOOL ALTERA_DMAWait(ALTERA_HANDLE hALTERA)
 {
     BOOL fOk = FALSE;
-    DWORD i = 10*1000*1000/2; /* Wait 10 seconds (each loop waits 2 usecs) */
+    u32 i = 10*1000*1000/2; /* Wait 10 seconds (each loop waits 2 usecs) */
     for(;i;i--)
     {
         WD_SLEEP sleep = {2, 0}; /* 2 microseconds */
-        DWORD dwDMAISR = ALTERA_ReadDword(hALTERA, ALTERA_AD_BAR0,
+        u32 dwDMAISR = ALTERA_ReadDword(hALTERA, ALTERA_AD_BAR0,
             ALTERA_REG_DMAISR);
         if (dwDMAISR & TX_COMP)
         {
@@ -526,10 +526,10 @@ BOOL ALTERA_DMAWait(ALTERA_HANDLE hALTERA)
     return fOk;
 }
 
-BOOL ALTERA_DMALock(ALTERA_HANDLE hALTERA, PVOID pBuffer, DWORD dwBytes,
+BOOL ALTERA_DMALock(ALTERA_HANDLE hALTERA, PVOID pBuffer, u32 dwBytes,
     BOOL fFromDev, WD_DMA *pDma)
 {
-    DWORD dwStatus;
+    u32 dwStatus;
 
     /* Perform Scatter/Gather DMA: */
     BZERO(*pDma);
@@ -552,11 +552,11 @@ void ALTERA_DMAUnlock(ALTERA_HANDLE hALTERA, WD_DMA *pDma)
     WD_DMAUnlock(hALTERA->hWD, pDma);
 }
 
-BOOL ALTERA_DMAChainTransfer(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr,
-    BOOL fFromDev, DWORD dwBytes, WD_DMA *pDma)
+BOOL ALTERA_DMAChainTransfer(ALTERA_HANDLE hALTERA, u32 dwLocalAddr,
+    BOOL fFromDev, u32 dwBytes, WD_DMA *pDma)
 {
     UINT32 DMACsr;
-    DWORD i;
+    u32 i;
     if (pDma->dwPages>ALTERA_DMA_FIFO_REGS)
     {
         sprintf(ALTERA_ErrorString, "too many pages for chain transfer\n");
@@ -570,7 +570,7 @@ BOOL ALTERA_DMAChainTransfer(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr,
     for (i=0; i<pDma->dwPages; i++)
     {
         ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, FIFO_BASE_OFFSET,
-            (DWORD) pDma->Page[i].pPhysicalAddr);
+            (u32) pDma->Page[i].pPhysicalAddr);
         ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, FIFO_BASE_OFFSET, pDma->Page[i].dwBytes);
     }
     ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, ALTERA_REG_DMALAR, dwLocalAddr);
@@ -579,10 +579,10 @@ BOOL ALTERA_DMAChainTransfer(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr,
     return ALTERA_DMAWait(hALTERA);
 }
 
-BOOL ALTERA_DMABlockTransfer(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr,
-    BOOL fFromDev, DWORD dwBytes, WD_DMA *pDma)
+BOOL ALTERA_DMABlockTransfer(ALTERA_HANDLE hALTERA, u32 dwLocalAddr,
+    BOOL fFromDev, u32 dwBytes, WD_DMA *pDma)
 {
-    DWORD i, dwTotalBytes = 0;
+    u32 i, dwTotalBytes = 0;
     UINT32 DMACsr;
 
     DMACsr = (fFromDev ? DIRECTION : 0)
@@ -596,7 +596,7 @@ BOOL ALTERA_DMABlockTransfer(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr,
         ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, ALTERA_REG_DMABCR,
             pDma->Page[i].dwBytes);
         ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, ALTERA_REG_DMAACR,
-            (DWORD) pDma->Page[i].pPhysicalAddr); /* this starts the dma */
+            (u32) pDma->Page[i].pPhysicalAddr); /* this starts the dma */
         if (!ALTERA_DMAWait(hALTERA))
             return FALSE;
         dwTotalBytes += pDma->Page[i].dwBytes;
@@ -604,8 +604,8 @@ BOOL ALTERA_DMABlockTransfer(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr,
     return TRUE;
 }
 
-BOOL ALTERA_DMAReadWriteBlock(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr,
-    PVOID pBuffer, BOOL fFromDev, DWORD dwBytes, BOOL fChained)
+BOOL ALTERA_DMAReadWriteBlock(ALTERA_HANDLE hALTERA, u32 dwLocalAddr,
+    PVOID pBuffer, BOOL fFromDev, u32 dwBytes, BOOL fChained)
 {
     BOOL fOk = FALSE;
     WD_DMA dma;
@@ -631,12 +631,12 @@ BOOL ALTERA_DMAReadWriteBlock(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr,
     return fOk;
 }
 //---------------------------- Usr Application -------------------------------------------------------
-BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, DWORD dwVendorID, DWORD dwDeviceID) {
+BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, u32 dwVendorID, u32 dwDeviceID) {
 
     ALTERA_HANDLE hAltera = (ALTERA_HANDLE)malloc(sizeof(ALTERA_STRUCT));
     hAltera = NULL;
     //BZERO(*hAltera);
-    DWORD dwCardNum = ALTERA_CountCards(dwVendorID, dwDeviceID);
+    u32 dwCardNum = ALTERA_CountCards(dwVendorID, dwDeviceID);
     if (dwCardNum == 0) {
         printf("No cards found.\n");
         return FALSE;
@@ -646,13 +646,11 @@ BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, DWORD dwVendorID, DWORD dwDevic
         printf("Fail to open the device.\n");
         return FALSE;
     }
-
-
     printf("Bus No. is %2ld, slot is %2ld, and function is %2ld\n",
         hAltera->pciSlot.dwBus, hAltera->pciSlot.dwSlot, hAltera->pciSlot.dwFunction);
     phAltera = hAltera;
     /*
-    for (DWORD i = 0; i < dwCardNum; i++) {
+    for (u32 i = 0; i < dwCardNum; i++) {
     printf("\n");
     printf("%2ld. Vendor ID: 0x%lX, Device ID: 0x%lX\n",
     i + 1,
@@ -664,22 +662,20 @@ BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, DWORD dwVendorID, DWORD dwDevic
     return TRUE;
     */
 }
+/*
+struct dma_descriptor *SetDescTable(ALTERA_HANDLE *phAltera, struct dma_descriptor *dma_desc_table_ptr, BYTE *buffer_virt_addr, u32 dwSize) {
 
-dma_desc_table *SetDescTable(ALTERA_HANDLE *phAltera, BYTE *buffer_virt_addr, DWORD dwSize) {
-
-
-    dma_desc_table *dma_desc_table_ptr;
-    dma_desc_table_ptr = (dma_desc_table)malloc(sizeof(dma_desc_table));
-    BZERO(&des_table_ptr);
+    dma_desc_table_ptr = (struct dma_desc_table*)malloc(sizeof(struct dma_descriptor));
+    BZERO(dma_desc_table_ptr);
 
     // READ DMA -> Move data from CPU to FPGA
     // Virtual data buffer address in CPU
-    dma_desc_table_ptr->descriptors[0].src_addr_low = buffer_virt_addr & 0xffffffff;
-    dma_desc_table_ptr->descriptors[0].src_addr_high = (buffer_virt_addr >> 32) & 0xffffffff;
+    dma_desc_table_ptr->src_addr_low = buffer_virt_addr & 0xffffffff;
+    dma_desc_table_ptr->src_addr_high = (buffer_virt_addr >> 32) & 0xffffffff;
 
     // DDR3 address on FPGA
-    des_table_ptr->descriptor[0].des_addr_low = DDR_MEM_BASE_ADDR_LOW;
-    des_table_ptr->descriptor[0].des_addr_high = DDR_MEM_BASE_ADDR_HI;
+	dma_desc_table_ptr->des_addr_low = DDR_MEM_BASE_ADDR_LOW;
+	dma_desc_table_ptr->descriptor[0].des_addr_high = DDR_MEM_BASE_ADDR_HI;
     // Descriptor ID is 0 and DMA size is 64KB
     des_table_ptr->descriptor[0].ctl_dma_len = dwSize;
 
@@ -689,12 +685,12 @@ dma_desc_table *SetDescTable(ALTERA_HANDLE *phAltera, BYTE *buffer_virt_addr, DW
 
     return dma_desc_table_ptr;
 }
-
-BOOL SetReadDesc(struct dma_descriptor *rd_desc, DWORD source, DWORD dest, WORD ctl_dma_len, WORD id) {
-    rd_desc->src_addr_ldw = source & 0xffffffffUL;
-    rd_desc->src_addr_udw = (source >> 32);
-    rd_desc->dest_addr_ldw = dest & 0xffffffffUL;
-    rd_desc->dest_addr_udw = (dest >> 32);
+*/
+BOOL SetReadDesc(struct dma_descriptor *rd_desc, u32 source, u32 dest, u16 ctl_dma_len, u16 id) {
+    rd_desc->src_addr_low = source & 0xffffffffUL;
+    rd_desc->src_addr_high = (source >> 32);
+    rd_desc->dest_addr_low = dest & 0xffffffffUL;
+    rd_desc->dest_addr_high = (dest >> 32);
     rd_desc->ctl_dma_len = ctl_dma_len | (id << 18);
     rd_desc->reserved[0] = 0x0;
     rd_desc->reserved[1] = 0x0;
@@ -702,54 +698,48 @@ BOOL SetReadDesc(struct dma_descriptor *rd_desc, DWORD source, DWORD dest, WORD 
     return 0;
 }
 
-BOOL SetDMADescController(ALTERA_HANDLE *phAltera, struct dma_desc_table *dma_desc_table_ptr) {
+BOOL SetDMADescController(ALTERA_HANDLE phAltera, struct dma_descriptor *dma_desc_table_ptr) {
 
     // Program the address of descriptor table to DMA descriptor controller
-    WORD dma_desc_table_addr_high = (dma_desc_table_ptr >> 32) & 0xffffffff;
-    WORD dma_desc_table_addr_low = dma_desc_table_ptr & 0xffffffff;
-
-    ALTERA_WriteWord(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_LOW_SRC_ADDR,dma_desc_table_addr_low);
-    ALTERA_WriteWord(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_HIGH_SRC_ADDR,dma_desc_table_addr_high);
+   
+    ALTERA_WriteWord(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_LOW_SRC_ADDR, dma_desc_table_ptr->src_addr_low);
+    ALTERA_WriteWord(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_HIGH_SRC_ADDR, dma_desc_table_ptr->src_addr_high);
 
     // Program the on-chip FIFO address to DMA Descriptor Controller, This is the address to which the DMA
     // Descriptor Controller will copy the status and descriptor table from CPU
-    ALTERA_WriteWord(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTLR_LOW_DEST_ADDR,ONCHIP_MEM_BASE_ADDR_LOW);
-    ALTERA_WriteWord(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTLR_HIGH_DEST_ADDR,ONCHIP_MEM_BASE_ADDR_HIGH);
+    ALTERA_WriteDWord(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTLR_LOW_DEST_ADDR,ONCHIP_MEM_BASE_ADDR_LOW);
+    ALTERA_WriteDWord(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTRL_HIGH_DEST_ADDR,ONCHIP_MEM_BASE_ADDR_HI);
 
     // Start DMA
-    ALTERA_WriteWord(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR,0);
+    ALTERA_WriteDWord(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR,0);
 
 }
 
 
-BOOL ALTERA_DMAReadBlock(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr,
-    PVOID pBuffer, BOOL fFromDev, DWORD dwBytes, BOOL fChained, dma_desc_table *dma_desc_table_ptr) {
+BOOL ALTERA_DMAReadBlock(ALTERA_HANDLE hALTERA) {
 
     BOOL status = FALSE;
     struct altera_pcie_dma_bookkeep *bk_ptr;
     bk_ptr = InitDMABk();
     BYTE *rp_rd_buffer_virt_addr = bk_ptr->rp_rd_buffer_virt_addr;
     BYTE *rp_wr_buffer_virt_addr = bk_ptr->rp_wr_buffer_virt_addr;
-    WD_DMA dma;
-
-    if (dwBytes == 0)
-        return FALSE;
+    WD_DMA *dma;
 
     // Lock memory for DMA
-    if (!ALTERA_DMALock(hALTERA, pBuffer, dwBytes, fFromDev, &dma))
+    if (!ALTERA_DMALock(hALTERA, rp_rd_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords, fFromDev, dma))
         return FALSE;
 
-    DWORD dest_addr = (ONCHIP_MEM_BASE_ADDR_HI << 32) | ONCHIP_MEM_BASE_ADDR_LOW;
+    u32 dest_addr = (ONCHIP_MEM_BASE_ADDR_HI << 32) | ONCHIP_MEM_BASE_ADDR_LOW;
     //Set descriptor[0]
-    BZERO(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptor[0]);
-    SetReadDesc(bk_ptr->lite_table_rd_cpu_virt_addr->descriptor[0], (DWORD)pDMA->Page[0].pPhysicalAddr,dest_addr, 0x00081000,0); // length is 16KB
+    //BZERO(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptor[0]);
+    SetReadDesc(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptors[0], (u32)dma->Page[0].pPhysicalAddr,dest_addr, 0x00081000,0); // length is 16KB
     //Initiate the wr_buffer and rd_buffer data
-    memset(rp_rd_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords *4);
-    init_rp_mem(rp_rd_buffer_virt_addr,bk_ptr->dma_status.altera_dma_num_dwords);
+    memset(rp_rd_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords * 4, sizeof(u8));
+    init_rp_mem(rp_rd_buffer_virt_addr,bk_ptr->dma_status.altera_dma_num_dwords, sizeof(u8));
 
-    memset(rp_wr_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords *4);
-    init_rp_mem(rp_wr_buffer_virt_addr,bk_ptr->dma_status.altera_dma_num_dwords);
-    SetDMADescController(hALTERA, dma_desc_table_ptr);
+    memset(rp_wr_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords *4, sizeof(u8));
+    init_rp_mem(rp_wr_buffer_virt_addr,bk_ptr->dma_status.altera_dma_num_dwords, sizeof(u8));
+    SetDMADescController(hALTERA, bk_ptr->lite_table_rd_cpu_virt_addr);
 
 }
 
@@ -763,7 +753,7 @@ static int set_lite_table_header(struct lite_dma_header *header)
 
 struct altera_pcie_dma_bookkeep *InitDMABk() {
     struct altera_pcie_dma_bookkeep *bk_ptr = NULL;
-    bk_ptr = (altera_pcie_dma_bookkeep *)malloc(sizeof(altera_pcie_dma_bookkeep));
+    bk_ptr = (struct altera_pcie_dma_bookkeep *)malloc(sizeof(struct altera_pcie_dma_bookkeep));
     BZERO(*bk_ptr);
     bk_ptr->dma_status.altera_dma_num_dwords = ALTERA_DMA_NUM_DWORDS;
     bk_ptr->dma_status.altera_dma_descriptor_num = ALTERA_DMA_DESCRIPTOR_NUM;
@@ -774,30 +764,30 @@ struct altera_pcie_dma_bookkeep *InitDMABk() {
     bk_ptr->dma_status.onchip = 1;
     bk_ptr->dma_status.rand = 0;
     // How to set PAGE_SIZE
-    bk_ptr->numpages = (PAGE_SIZE >= MAX_NUM_DWORDS*4) ? 1 : (int)((MAX_NUM_DWORDS*4)/PAGE_SIZE);
+    bk_ptr->numpages = (PAGE_SIZE >= MAX_NUM_DWORDS *4) ? 1 : (int)((MAX_NUM_DWORDS*4)/PAGE_SIZE);
     // Set descriptor table address
-    bk_ptr->lite_table_rd_bus_addr = (struct lite_dma_desc_table *)malloc(sizeof(lite_dma_desc_table));
-    bk_ptr->lite_table_wr_bus_addr = (struct lite_dma_desc_table *)malloc(sizeof(lite_dma_desc_table));
+    bk_ptr->lite_table_rd_bus_addr = (struct lite_dma_desc_table *)malloc(sizeof(struct lite_dma_desc_table));
+    bk_ptr->lite_table_wr_bus_addr = (struct lite_dma_desc_table *)malloc(sizeof(struct lite_dma_desc_table));
 
     // Set read buffer and address
     bk_ptr->rp_rd_buffer_virt_addr = (BYTE *)malloc(sizeof(BYTE)*PAGE_SIZE * bk_ptr->numpages);
-    rp_rd_buffer_bus_addr = bk_ptr->rp_rd_buffer_virt_addr;
+    bk_ptr->rp_rd_buffer_bus_addr = bk_ptr->rp_rd_buffer_virt_addr;
 
     bk_ptr->rp_wr_buffer_virt_addr = (BYTE *)malloc(sizeof(BYTE)*PAGE_SIZE * bk_ptr->numpages);
-    rp_wr_buffer_bus_addr = bk_ptr->rp_wr_buffer_virt_addr;
+    bk_ptr->rp_wr_buffer_bus_addr = bk_ptr->rp_wr_buffer_virt_addr;
 
-    return bk;
+    return bk_ptr;
 
 }
 
-WORD init_rp_mem(BYTE *rp_buffer_virt_addr, DWORD num_dword)
+u16 init_rp_mem(BYTE *rp_buffer_virt_addr, u32 num_dword)
 {
-    WORD i = 0;
+    u16 i = 0;
     //u32 increment_value = 0;
-    WORD tmp_rand;
-    for (i = 0; i < num_bytes; i++) {
+    u16 tmp_rand;
+    for (i = 0; i < num_dword; i++) {
         tmp_rand = rand();
-       *((*DWORD)rp_buffer_virt_addr+i) = tmp_rand;
+       *(((u32*)rp_buffer_virt_addr)+i) = tmp_rand;
     }
     return 0;
 }
