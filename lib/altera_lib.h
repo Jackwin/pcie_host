@@ -71,6 +71,34 @@ extern "C" {
 #define WR_CTRL_BUF_BASE_LOW            0x80002000
 #define WR_CTRL_BUF_BASE_HI             0x0000
 
+
+// DMA Command
+struct dma_cmd {
+    int cmd;
+    int usr_buf_size;
+    char *buf;
+};
+
+struct dma_status {
+    char run_write;
+    char run_read;
+    char run_simul;
+    int length_transfer;
+    int altera_dma_num_dwords;
+    int altera_dma_descriptor_num;
+    struct timeval write_time;
+    struct timeval read_time;
+    struct timeval simul_time;
+    char pass_read;
+    char pass_write;
+    char pass_simul;
+    char read_eplast_timeout;
+    char write_eplast_timeout;
+    int offset;
+    char onchip;
+    char rand;
+};
+
 struct dma_descriptor {
     WORD src_addr_low;
     WORD src_addr_high;
@@ -99,6 +127,23 @@ struct lite_dma_desc_table {
     struct lite_dma_header header;
     struct dma_descriptor descriptors[ALTERA_DMA_DESCRIPTOR_NUM];
 } __attribute__ ((packed));
+
+struct altera_pcie_dma_bookkeep {
+    struct lite_dma_desc_table *lite_table_rd_cpu_virt_addr;
+    struct lite_dma_desc_table *lite_table_wr_cpu_virt_addr;
+    // The start address of lite_dms_desc_table
+    DWORD lite_table_rd_bus_addr;
+    DWORD lite_table_wr_bus_addr;
+
+    WORD numpages;
+    BYTE *rp_rd_buffer_virt_addr;
+    DWORD rp_rd_buffer_bus_addr;
+    BYTE *rp_wr_buffer_virt_addr;
+    DWORD rp_wr_buffer_bus_addr;
+    struct dma_status dma_status;
+
+};
+
 
 enum { ALTERA_DEFAULT_VENDOR_ID = 0x1172 };
 enum { ALTERA_DEFAULT_DEVICE_ID = 0x0004 };

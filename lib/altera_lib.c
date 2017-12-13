@@ -665,7 +665,7 @@ BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, DWORD dwVendorID, DWORD dwDevic
     */
 }
 
-dma_desc_table *SetDescriptorTable(ALTERA_HANDLE *phAltera, BYTE *buffer_virt_addr, DWORD dwSize) {
+dma_desc_table *SetDescTable(ALTERA_HANDLE *phAltera, BYTE *buffer_virt_addr, DWORD dwSize) {
 
 
     dma_desc_table *dma_desc_table_ptr;
@@ -690,12 +690,24 @@ dma_desc_table *SetDescriptorTable(ALTERA_HANDLE *phAltera, BYTE *buffer_virt_ad
     return dma_desc_table_ptr;
 }
 
-BOOL SetDMADescController(ALTERA_HANDLE *phAltera, dma_desc_table *dma_desc_table_ptr) {
-    void ALTERA_WriteWord(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
-    DWORD dwOffset, WORD data)
+BOOL SetReadDesc(struct dma_descriptor *rd_desc, DWORD source, DWORD dest, WORD ctl_dma_len, WORD id) {
+    rd_desc->src_addr_ldw = source & 0xffffffffUL;
+    rd_desc->src_addr_udw = (source >> 32);
+    rd_desc->dest_addr_ldw = dest & 0xffffffffUL;
+    rd_desc->dest_addr_udw = (dest >> 32);
+    rd_desc->ctl_dma_len = ctl_dma_len | (id << 18);
+    rd_desc->reserved[0] = 0x0;
+    rd_desc->reserved[1] = 0x0;
+    rd_desc->reserved[2] = 0x0;
+    return 0;
+}
+
+BOOL SetDMADescController(ALTERA_HANDLE *phAltera, struct dma_desc_table *dma_desc_table_ptr) {
+
     // Program the address of descriptor table to DMA descriptor controller
     WORD dma_desc_table_addr_high = (dma_desc_table_ptr >> 32) & 0xffffffff;
     WORD dma_desc_table_addr_low = dma_desc_table_ptr & 0xffffffff;
+
     ALTERA_WriteWord(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_LOW_SRC_ADDR,dma_desc_table_addr_low);
     ALTERA_WriteWord(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_HIGH_SRC_ADDR,dma_desc_table_addr_high);
 
@@ -709,10 +721,64 @@ BOOL SetDMADescController(ALTERA_HANDLE *phAltera, dma_desc_table *dma_desc_tabl
 
 }
 
+
+
+BOOL ALTERA_DMAReadBlock(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr,
+    PVOID pBuffer, BOOL fFromDev, DWORD dwBytes, BOOL fChained, dma_desc_table *dma_desc_table_ptr) {
+
+    BOOL status = FALSE;
+    struct altera_pcie_dma_bookkeep *bk_ptr;
+    bk_ptr = InitDMABk();
+    WD_DMA dma;
+
+    if (dwBytes == 0)
+        return FALSE;
+
+    // Lock memory for DMA
+    if (!ALTERA_DMALock(hALTERA, pBuffer, dwBytes, fFromDev, &dma))
+        return FALSE;
+
+    DWORD dest_addr = (ONCHIP_MEM_BASE_ADDR_HI << 32) | ONCHIP_MEM_BASE_ADDR_LOW;
+    //Set descriptor[0]
+    BZERO(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptor[0]);
+    SetReadDesc(bk_ptr->lite_table_rd_cpu_virt_addr->descriptor[0], (DWORD)pDMA->Page[0].pPhysicalAddr,dest_addr, 0x00081000,0); // length is 16KB
+    SetDMADescController(hALTERA, dma_desc_table_ptr);
+
+}
+
 static int set_lite_table_header(struct lite_dma_header *header)
 {
     int i;
     for (i = 0; i < 128; i++)
         header->flags[i] = 0x00;
     return 0;
+}
+
+struct altera_pcie_dma_bookkeep *InitDMABk() {
+    struct altera_pcie_dma_bookkeep *bk_ptr = NULL;
+    bk_ptr = (altera_pcie_dma_bookkeep *)malloc(sizeof(altera_pcie_dma_bookkeep));
+    BZERO(*bk_ptr);
+    bk_ptr->dma_status.altera_dma_num_dwords = ALTERA_DMA_NUM_DWORDS;
+    bk_ptr->dma_status.altera_dma_descriptor_num = ALTERA_DMA_DESCRIPTOR_NUM;
+    bk_ptr->dma_status.run_write = 1;
+    bk_ptr->dma_status.run_read = 1;
+    bk_ptr->dma_status.run_simul = 1;
+    bk_ptr->dma_status.offset = 0;
+    bk_ptr->dma_status.onchip = 1;
+    bk_ptr->dma_status.rand = 0;
+    // How to set PAGE_SIZE
+    bk_ptr->numpages = (PAGE_SIZE >= MAX_NUM_DWORDS*4) ? 1 : (int)((MAX_NUM_DWORDS*4)/PAGE_SIZE);
+    // Set descriptor table address
+    bk_ptr->lite_table_rd_bus_addr = (struct lite_dma_desc_table *)malloc(sizeof(lite_dma_desc_table));
+    bk_ptr->lite_table_wr_bus_addr = (struct lite_dma_desc_table *)malloc(sizeof(lite_dma_desc_table));
+
+    // Set read buffer and address
+    bk_ptr->rp_rd_buffer_virt_addr = (BYTE *)malloc(sizeof(BYTE)*PAGE_SIZE * bk_ptr->numpages);
+    rp_rd_buffer_bus_addr = bk_ptr->rp_rd_buffer_virt_addr;
+
+    bk_ptr->rp_wr_buffer_virt_addr = (BYTE *)malloc(sizeof(BYTE)*PAGE_SIZE * bk_ptr->numpages);
+    rp_wr_buffer_bus_addr = bk_ptr->rp_wr_buffer_virt_addr;
+
+    return bk;
+
 }
