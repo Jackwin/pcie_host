@@ -48,7 +48,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>E:\chunjie\fast-wps\pcie\pcie_statixV\lib;$(WD_BASEDIR);$(WD_BASEDIR)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\chunjie\fast-wps\pcie\pcie_host\lib;$(WD_BASEDIR);$(WD_BASEDIR)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;_MT;_CONSOLE;WD_DRIVER_NAME_CHANGE;WINNT;KERNEL_64BIT;_CRT_SECURE_NO_DEPRECATE;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeaderOutputFile>.\Debug/stratixv_diag.pch</PrecompiledHeaderOutputFile>
@@ -114,9 +114,6 @@
   <ItemGroup>
     <ClCompile Include="..\..\lib\altera_lib.c" />
     <ClCompile Include="host.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\lib\altera_lib.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -13,47 +13,64 @@
 DWORD VENDOR_ID = 0x1172;
 DWORD DEVICE_ID = 0xe003;
 
-typedef struct 
+typedef struct
 {
-	DWORD vendor_id;
-	DWORD device_id;
-	DWORD num;
-}CARD_STRUCT;
+    DWORD vendor_id;
+    DWORD device_id;
+    DWORD num;
+} CARD_STRUCT;
 
 int main() {
-	WDC_DEVICE_HANDLE hDev = NULL;
-	DWORD dwStatus;
-	ALTERA_HANDLE *phALTERA = NULL;
-	CARD_STRUCT card;
-	card.vendor_id = VENDOR_ID;
-	card.device_id = DEVICE_ID;
-	card.num = 1;
-	printf("\n");
+    WDC_DEVICE_HANDLE hDev = NULL;
+    DWORD dwStatus;
+    ALTERA_HANDLE phALTERA =NULL;
+    CARD_STRUCT card;
+    card.vendor_id = VENDOR_ID;
+    card.device_id = DEVICE_ID;
+    card.num = 1;
+    printf("\n");
 
-	DWORD card_num = ALTERA_CountCards(VENDOR_ID, DEVICE_ID);
-	printf("%d Altera cards found.\n", card_num);
+    DWORD card_num = ALTERA_CountCards(VENDOR_ID, DEVICE_ID);
+    printf("%d Altera cards found.\n", card_num);
+/*
+    BOOL status = ALTERA_Open(&phALTERA, card.vendor_id, card.device_id, card.num - 1);
+    if (!status) {
+        printf("Fail to open Altera Device.\n");
+        return 0;
+    }
+*/
+    BOOL status = DeviceFindAndOpen(&phALTERA,card.vendor_id, card.device_id);
+     if (!status) {
+        printf("Fail to open Altera Device.\n");
+        return 0;
+        
+    }
 
-	BOOL status = ALTERA_Open(&phALTERA, card.vendor_id, card.device_id, card.num-1);
-	if (!status) {
-		printf("Fail to open Altera Device.\n");
-		return 0;
-	}
+     status = ALTERA_DMABlock(phALTERA,0);
+     if (!status) {
+         printf("Fail to Read Altera Device.\n");
+         return 0;
 
+     }
 
-	/* Initialize the STRATIXV library */
-	/*
-	dwStatus = STRATIXV_LibInit();
-	if (WD_STATUS_SUCCESS != dwStatus)
-	{
-		STRATIXV_ERR("stratixv_diag: Failed to initialize the STRATIXV library: %s",
-			STRATIXV_GetLastErr());
-		return dwStatus;
-	}
-	*/
-	/* Find and open a STRATIXV device (by default ID) */
-	/*
-	if (STRATIXV_DEFAULT_VENDOR_ID)
-		hDev = DeviceFindAndOpen(STRATIXV_DEFAULT_VENDOR_ID, STRATIXV_DEFAULT_DEVICE_ID);
-	*/
-	return 0;
+  
+
+    ALTERA_Close(phALTERA);
+
+    /* Initialize the STRATIXV library */
+    /*
+    dwStatus = STRATIXV_LibInit();
+    if (WD_STATUS_SUCCESS != dwStatus)
+    {
+        STRATIXV_ERR("stratixv_diag: Failed to initialize the STRATIXV library: %s",
+            STRATIXV_GetLastErr());
+        return dwStatus;
+    }
+    */
+    /* Find and open a STRATIXV device (by default ID) */
+    /*
+    if (STRATIXV_DEFAULT_VENDOR_ID)
+        hDev = DeviceFindAndOpen(STRATIXV_DEFAULT_VENDOR_ID, STRATIXV_DEFAULT_DEVICE_ID);
+    */
+    return 0;
 }

@@ -82,6 +82,44 @@ extern "C" {
 
     #define TIMEOUT 0x2000000
 
+    /* Internal data structures */
+
+
+  
+
+   
+
+	enum { ALTERA_DEFAULT_VENDOR_ID = 0x1172 };
+	enum { ALTERA_DEFAULT_DEVICE_ID = 0x0004 };
+
+	typedef enum
+	{
+		ALTERA_MODE_BYTE = 0,
+		ALTERA_MODE_WORD = 1,
+		ALTERA_MODE_DWORD = 2
+	} ALTERA_MODE;
+
+	typedef enum
+	{
+		ALTERA_AD_BAR0 = AD_PCI_BAR0,
+		ALTERA_AD_BAR1 = AD_PCI_BAR1,
+		ALTERA_AD_BAR2 = AD_PCI_BAR2,
+		ALTERA_AD_BAR3 = AD_PCI_BAR3,
+		ALTERA_AD_BAR4 = AD_PCI_BAR4,
+		ALTERA_AD_BAR5 = AD_PCI_BAR5,
+		ALTERA_ITEMS = AD_PCI_BARS,
+	} ALTERA_ADDR;
+
+	
+    typedef struct
+    {
+        u32 dwCounter;   // number of interrupts received
+        u32 dwLost;      // number of interrupts not yet dealt with
+        BOOL fStopped;     // was interrupt disabled during wait
+    } ALTERA_INT_RESULT;
+
+    typedef struct ALTERA_STRUCT *ALTERA_HANDLE;
+    typedef void (DLLCALLCONV *ALTERA_INT_HANDLER)(ALTERA_HANDLE hALTERA, ALTERA_INT_RESULT *intResult);
     // DMA Command
     struct dma_cmd {
         int cmd;
@@ -156,36 +194,11 @@ extern "C" {
 
     };
 
-
-    enum { ALTERA_DEFAULT_VENDOR_ID = 0x1172 };
-    enum { ALTERA_DEFAULT_DEVICE_ID = 0x0004 };
-
-    typedef enum
-    {
-        ALTERA_MODE_BYTE   = 0,
-        ALTERA_MODE_WORD   = 1,
-        ALTERA_MODE_DWORD  = 2
-    } ALTERA_MODE;
-
-    typedef enum
-    {
-        ALTERA_AD_BAR0 = AD_PCI_BAR0,
-        ALTERA_AD_BAR1 = AD_PCI_BAR1,
-        ALTERA_AD_BAR2 = AD_PCI_BAR2,
-        ALTERA_AD_BAR3 = AD_PCI_BAR3,
-        ALTERA_AD_BAR4 = AD_PCI_BAR4,
-        ALTERA_AD_BAR5 = AD_PCI_BAR5,
-        ALTERA_ITEMS = AD_PCI_BARS,
-    } ALTERA_ADDR;
-
-    typedef struct ALTERA_STRUCT *ALTERA_HANDLE;
-
-    typedef struct
-    {
-        u32 dwCounter;   // number of interrupts received
-        u32 dwLost;      // number of interrupts not yet dealt with
-        BOOL fStopped;     // was interrupt disabled during wait
-    } ALTERA_INT_RESULT;
+	
+	//------------------------------------------------------------------------------------------------
+  
+	
+	struct altera_pcie_dma_bookkeep *InitDMABookkeep();
 
     typedef void (DLLCALLCONV *ALTERA_INT_HANDLER)( ALTERA_HANDLE hALTERA, ALTERA_INT_RESULT *intResult);
 
@@ -215,7 +228,15 @@ extern "C" {
     // Function for performing Scatter/Gather DMA
     BOOL ALTERA_DMAReadWriteBlock(ALTERA_HANDLE hALTERA, u32 dwLocalAddr, PVOID pBuffer, BOOL fRead, u32 dwBytes, BOOL fChained);
 
+	u16 init_ep_mem(ALTERA_HANDLE hALTERA, u32 mem_byte_offset, u32 num_dwords, u8 increment);
+	u16 init_rp_mem(BYTE *rp_buffer_virt_addr, u32 num_dword);
+	static int set_lite_table_header(struct lite_dma_header *header);
+	
+	BOOL SetDMADescController(ALTERA_HANDLE phAltera, struct dma_descriptor *dma_desc_table_ptr, BOOL fromDev);
+	BOOL SetDesc(struct dma_descriptor *dma_desc, u32 source, u32 dest, u16 ctl_dma_len, u16 id);
+	BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, u32 dwVendorID, u32 dwDeviceID);
 
+	BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev);
     // this string is set to an error message, if one occurs
     extern CHAR ALTERA_ErrorString[];
 
