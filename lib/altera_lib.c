@@ -251,9 +251,9 @@ BOOL ALTERA_DetectCardElements(ALTERA_HANDLE hALTERA)
             break;
         case ITEM_IO:
             ad_sp = pItem->I.IO.dwBar;
-	
-			hALTERA->addrDesc[ad_sp].fIsMemory = FALSE;
-			hALTERA->addrDesc[ad_sp].index = i;
+
+            hALTERA->addrDesc[ad_sp].fIsMemory = FALSE;
+            hALTERA->addrDesc[ad_sp].index = i;
             hALTERA->addrDesc[ad_sp].fActive = TRUE;
             break;
         case ITEM_INTERRUPT:
@@ -630,10 +630,10 @@ BOOL ALTERA_DMAReadWriteBlock(ALTERA_HANDLE hALTERA, u32 dwLocalAddr,
     return fOk;
 }
 //---------------------------- Usr Application -------------------------------------------------------
-BOOL DeviceFindAndOpen(ALTERA_HANDLE *phAltera, u32 dwVendorID, u32 dwDeviceID){
+BOOL DeviceFindAndOpen(ALTERA_HANDLE *phAltera, u32 dwVendorID, u32 dwDeviceID) {
 
     ALTERA_HANDLE hAltera = (ALTERA_HANDLE)malloc(sizeof(ALTERA_STRUCT));
-   // *phAltera = NULL;
+    // *phAltera = NULL;
     //BZERO(*hAltera);
     u32 dwCardNum = ALTERA_CountCards(dwVendorID, dwDeviceID);
     if (dwCardNum == 0) {
@@ -647,7 +647,7 @@ BOOL DeviceFindAndOpen(ALTERA_HANDLE *phAltera, u32 dwVendorID, u32 dwDeviceID){
     }
     printf("Bus No. is %2ld, slot is %2ld, and function is %2ld\n",
            hAltera->pciSlot.dwBus, hAltera->pciSlot.dwSlot, hAltera->pciSlot.dwFunction);
-    printf("BAR0 addr is 0x%1X, size is 0x%1X.\n",hAltera->cardReg.Card.Item[hAltera->addrDesc[ALTERA_AD_BAR0].index].I.Mem.dwPhysicalAddr, hAltera->cardReg.Card.Item[hAltera->addrDesc[ALTERA_AD_BAR0].index].I.Mem.dwBytes);
+    printf("BAR0 addr is 0x%1X, size is 0x%1X.\n", hAltera->cardReg.Card.Item[hAltera->addrDesc[ALTERA_AD_BAR0].index].I.Mem.dwPhysicalAddr, hAltera->cardReg.Card.Item[hAltera->addrDesc[ALTERA_AD_BAR0].index].I.Mem.dwBytes);
     printf("BAR4 addr is 0x%1X, size is 0x%1X\n", hAltera->cardReg.Card.Item[hAltera->addrDesc[ALTERA_AD_BAR4].index].I.Mem.dwPhysicalAddr, hAltera->cardReg.Card.Item[hAltera->addrDesc[ALTERA_AD_BAR4].index].I.Mem.dwBytes);
     *phAltera = hAltera;
     return TRUE;
@@ -782,96 +782,97 @@ u16 init_ep_mem(ALTERA_HANDLE hALTERA, u32 mem_byte_offset, u32 num_dwords, u8 i
 // DMA READ -> Move data from CPU to FPGA
 BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev) {
 
-	BOOL status = FALSE;
-	struct altera_pcie_dma_bookkeep *bk_ptr;
-	u32 last_id, write_127;
-	u32 timeout;
-	bk_ptr = InitDMABookkeep();
-	BYTE *rp_rd_buffer_virt_addr;
+    BOOL status = FALSE;
+    struct altera_pcie_dma_bookkeep *bk_ptr;
+    u32 last_id, write_127;
+    u32 timeout;
+    bk_ptr = InitDMABookkeep();
+    BYTE *rp_rd_buffer_virt_addr;
     rp_rd_buffer_virt_addr = bk_ptr->rp_rd_buffer_virt_addr;
-	BYTE *rp_wr_buffer_virt_addr;
+    BYTE *rp_wr_buffer_virt_addr;
     rp_wr_buffer_virt_addr = bk_ptr->rp_wr_buffer_virt_addr;
-	WD_DMA *dma;
+    WD_DMA *dma;
+    dma->hCard = hALTERA->cardReg.hCard;
+    PVOID pbuffer = malloc(sizeof(BYTE) * PAGE_SIZE * bk_ptr->dma_status.altera_dma_num_dwords*4);
+    // Lock memory for DMA
+    if (!ALTERA_DMALock(hALTERA, pbuffer, bk_ptr->dma_status.altera_dma_num_dwords, fromDev, dma))
+        return FALSE;
+    // Init rd_buffer data
+    memset(rp_rd_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords * 4, sizeof(u8));
+    init_rp_mem(rp_rd_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords, sizeof(u8));
+    //Initiate the wr_buffer and rd_buffer data
+    memset(rp_wr_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords * 4, sizeof(u8));
+    init_rp_mem(rp_wr_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords, sizeof(u8));
 
-	// Lock memory for DMA
-	if (!ALTERA_DMALock(hALTERA, (BYTE *)rp_rd_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords, fromDev, dma))
-		return FALSE;
-	// Init rd_buffer data
-	memset(rp_rd_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords * 4, sizeof(u8));
-	init_rp_mem(rp_rd_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords, sizeof(u8));
-	//Initiate the wr_buffer and rd_buffer data
-	memset(rp_wr_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords * 4, sizeof(u8));
-	init_rp_mem(rp_wr_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords, sizeof(u8));
+    // Init DDR Memory
+    init_ep_mem(hALTERA, ALTERA_AD_BAR4, bk_ptr->dma_status.altera_dma_num_dwords, 0);
 
-	// Init DDR Memory
-	init_ep_mem(hALTERA, ALTERA_AD_BAR4, bk_ptr->dma_status.altera_dma_num_dwords, 0);
-
-	// FIFO for descriptor table
-	u64 on_chip_addr = (ONCHIP_MEM_BASE_ADDR_HI << 32) | ONCHIP_MEM_BASE_ADDR_LOW;
-	//Set descriptor[0]
-	//BZERO(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptor[0]);
-	// DMA read operation
-	if (!fromDev) {
-		SetDesc(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptors[0], (u32)dma->Page[0].pPhysicalAddr, on_chip_addr, 0x00081000, 0); // length is 16KB
-																																	 // Get the last DMA request ID. If no DMA request, it will return 0xff
-		last_id = ALTERA_ReadDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR);
-		if (last_id == 0xff) {
-			SetDMADescController(hALTERA, bk_ptr->lite_table_rd_cpu_virt_addr, fromDev);
-			last_id = 127;
-		}
-		//Update ID
-		last_id = last_id + bk_ptr->dma_status.altera_dma_descriptor_num;
-		//Over DMA request
-		if (last_id > 127) {
-			last_id = last_id - 128;
-			if ((bk_ptr->dma_status.altera_dma_descriptor_num > 1) && (last_id != 127)) write_127 = 1;
-		}
-		// Start DMA request
-		if (write_127)
-			ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, 127);
-		ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, last_id);
-		timeout = TIMEOUT;
-		while (1) {
-			if (bk_ptr->lite_table_rd_cpu_virt_addr->header.flags[last_id]) {
-				break;
-			}
-			timeout--;
-			if (timeout == 0) {
-				printf("DMA read operation is timeout.\n");
-				break;
-			}
-		}
-	}
-	else {
-		// DMA write operation
-		SetDesc(&bk_ptr->lite_table_wr_cpu_virt_addr->descriptors[0], (u32)dma->Page[0].pPhysicalAddr, on_chip_addr, 0x00081000, 0); // length is 16KB
-																																	 // Get the last DMA request ID. If no DMA request, it will return 0xff
-		last_id = ALTERA_ReadDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_LAST_PTR);
-		if (last_id == 0xff) {
-			SetDMADescController(hALTERA, bk_ptr->lite_table_rd_cpu_virt_addr, fromDev);
-			last_id = 127;
-		}
-		//Update ID
-		last_id = last_id + bk_ptr->dma_status.altera_dma_descriptor_num;
-		//Over DMA request
-		if (last_id > 127) {
-			last_id = last_id - 128;
-			if ((bk_ptr->dma_status.altera_dma_descriptor_num > 1) && (last_id != 127)) write_127 = 1;
-		}
-		// Start DMA request
-		if (write_127)
-			ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_LAST_PTR, 127);
-		ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_LAST_PTR, last_id);
-		timeout = TIMEOUT;
-		while (1) {
-			if (bk_ptr->lite_table_wr_cpu_virt_addr->header.flags[last_id]) {
-				break;
-			}
-			timeout--;
-			if (timeout == 0) {
-				printf("DMA write operation is timeout.\n");
-				break;
-			}
-		}
-	}
+    // FIFO for descriptor table
+    u64 on_chip_addr = (ONCHIP_MEM_BASE_ADDR_HI << 32) | ONCHIP_MEM_BASE_ADDR_LOW;
+    //Set descriptor[0]
+    //BZERO(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptor[0]);
+    // DMA read operation
+    if (!fromDev) {
+        SetDesc(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptors[0], (u32)dma->Page[0].pPhysicalAddr, on_chip_addr, 0x00081000, 0); // length is 16KB
+        // Get the last DMA request ID. If no DMA request, it will return 0xff
+        last_id = ALTERA_ReadDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR);
+        if (last_id == 0xff) {
+            SetDMADescController(hALTERA, bk_ptr->lite_table_rd_cpu_virt_addr, fromDev);
+            last_id = 127;
+        }
+        //Update ID
+        last_id = last_id + bk_ptr->dma_status.altera_dma_descriptor_num;
+        //Over DMA request
+        if (last_id > 127) {
+            last_id = last_id - 128;
+            if ((bk_ptr->dma_status.altera_dma_descriptor_num > 1) && (last_id != 127)) write_127 = 1;
+        }
+        // Start DMA request
+        if (write_127)
+            ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, 127);
+        ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, last_id);
+        timeout = TIMEOUT;
+        while (1) {
+            if (bk_ptr->lite_table_rd_cpu_virt_addr->header.flags[last_id]) {
+                break;
+            }
+            timeout--;
+            if (timeout == 0) {
+                printf("DMA read operation is timeout.\n");
+                break;
+            }
+        }
+    }
+    else {
+        // DMA write operation
+        SetDesc(&bk_ptr->lite_table_wr_cpu_virt_addr->descriptors[0], (u32)dma->Page[0].pPhysicalAddr, on_chip_addr, 0x00081000, 0); // length is 16KB
+        // Get the last DMA request ID. If no DMA request, it will return 0xff
+        last_id = ALTERA_ReadDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_LAST_PTR);
+        if (last_id == 0xff) {
+            SetDMADescController(hALTERA, bk_ptr->lite_table_rd_cpu_virt_addr, fromDev);
+            last_id = 127;
+        }
+        //Update ID
+        last_id = last_id + bk_ptr->dma_status.altera_dma_descriptor_num;
+        //Over DMA request
+        if (last_id > 127) {
+            last_id = last_id - 128;
+            if ((bk_ptr->dma_status.altera_dma_descriptor_num > 1) && (last_id != 127)) write_127 = 1;
+        }
+        // Start DMA request
+        if (write_127)
+            ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_LAST_PTR, 127);
+        ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_LAST_PTR, last_id);
+        timeout = TIMEOUT;
+        while (1) {
+            if (bk_ptr->lite_table_wr_cpu_virt_addr->header.flags[last_id]) {
+                break;
+            }
+            timeout--;
+            if (timeout == 0) {
+                printf("DMA write operation is timeout.\n");
+                break;
+            }
+        }
+    }
 }
