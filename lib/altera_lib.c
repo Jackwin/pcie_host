@@ -688,13 +688,13 @@ BOOL SetDesc(struct dma_descriptor *dma_desc, DWORD source_addr_high, DWORD sour
     return 0;
 }
 
-BOOL SetDMADescController(ALTERA_HANDLE phAltera, struct dma_descriptor *dma_desc_table_ptr, BOOL fromDev) {
+BOOL SetDMADescController(ALTERA_HANDLE phAltera, DWORD desc_table_start_addr, BOOL fromDev) {
 
     // if fromDev  is false, it is DMA read operation, movin data from CPU to FPGA
     if (!fromDev) {
         // Program the address of descriptor table to DMA descriptor controller
-        ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_LOW_SRC_ADDR, dma_desc_table_ptr->src_addr_low);
-        ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_HIGH_SRC_ADDR, dma_desc_table_ptr->src_addr_high);
+        ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_LOW_SRC_ADDR, desc_table_start_addr);
+        ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_HIGH_SRC_ADDR, 0);
 
         // Program the on-chip FIFO address to DMA Descriptor Controller, This is the address to which the DMA
         // Descriptor Controller will copy the status and descriptor table from CPU
@@ -702,8 +702,8 @@ BOOL SetDMADescController(ALTERA_HANDLE phAltera, struct dma_descriptor *dma_des
         ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTRL_HIGH_DEST_ADDR, ONCHIP_MEM_BASE_ADDR_HI);
     }
     else {
-        ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_RC_LOW_SRC_ADDR, dma_desc_table_ptr->src_addr_low);
-        ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_RC_HIGH_SRC_ADDR, dma_desc_table_ptr->src_addr_high);
+        ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_RC_LOW_SRC_ADDR, desc_table_start_addr);
+        ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_RC_HIGH_SRC_ADDR, 0);
 
         // Program the on-chip FIFO address to DMA Descriptor Controller, This is the address to which the DMA
         // Descriptor Controller will copy the status and descriptor table from CPU
@@ -744,29 +744,30 @@ struct altera_pcie_dma_bookkeep *InitDMABookkeep() {
     bk_ptr->lite_table_wr_cpu_virt_addr = (struct lite_dma_desc_table *)malloc(sizeof(struct lite_dma_desc_table));
 	bk_ptr->lite_table_rd_cpu_virt_addr->header.flags[0] = 0x0;
 
-    bk_ptr->lite_table_rd_bus_addr = &bk_ptr->lite_table_rd_cpu_virt_addr;
-    bk_ptr->lite_table_wr_bus_addr = &bk_ptr->lite_table_wr_cpu_virt_addr;
+    bk_ptr->lite_table_rd_bus_addr = (DWORD)bk_ptr->lite_table_rd_cpu_virt_addr;
+    bk_ptr->lite_table_wr_bus_addr = (DWORD)bk_ptr->lite_table_wr_cpu_virt_addr;
 
     // Set read buffer and address
-    BYTE *rp_rd_buffer = (BYTE *)malloc(sizeof(BYTE) * PAGE_SIZE * bk_ptr->numpages);
+    DWORD *rp_rd_buffer = (DWORD *)malloc(sizeof(BYTE) * PAGE_SIZE * bk_ptr->numpages);
     bk_ptr->rp_rd_buffer_virt_addr = rp_rd_buffer;
-    bk_ptr->rp_rd_buffer_bus_addr = bk_ptr->rp_rd_buffer_virt_addr;
+    bk_ptr->rp_rd_buffer_bus_addr = (DWORD)rp_rd_buffer;
     
-    BYTE *rp_wr_buffer = (BYTE *)malloc(sizeof(BYTE) * PAGE_SIZE * bk_ptr->numpages);
+    DWORD *rp_wr_buffer = (DWORD *)malloc(sizeof(BYTE) * PAGE_SIZE * bk_ptr->numpages);
     bk_ptr->rp_wr_buffer_virt_addr = rp_wr_buffer;
-    bk_ptr->rp_wr_buffer_bus_addr = bk_ptr->rp_wr_buffer_virt_addr;
+    bk_ptr->rp_wr_buffer_bus_addr = (DWORD)rp_wr_buffer;
 
     return bk_ptr;
 
 }
 
-WORD init_rp_mem(BYTE *rp_buffer_virt_addr, DWORD num_dword) {
-    WORD i = 0;
+WORD init_rp_mem(DWORD *rp_buffer_virt_addr, DWORD num_dword) {
+    DWORD i = 0;
     //DWORD increment_value = 0;
-    WORD tmp_rand;
+    DWORD tmp_rand;
     for (i = 0; i < num_dword; i++) {
         tmp_rand = rand();
-        *(((DWORD*)rp_buffer_virt_addr) + i) = tmp_rand;
+        printf("init_rp_mem tmp_rand is 0x%X.\n", tmp_rand);
+        *(rp_buffer_virt_addr + i*sizeof(DWORD)) = tmp_rand;
     }
     return 1;
 }
@@ -780,8 +781,9 @@ WORD init_ep_mem(ALTERA_HANDLE hALTERA, DWORD mem_byte_offset, DWORD num_dwords,
 //       iowrite32 (cpu_to_le32(init_value+increment_value), (DWORD *)(bk_ptr->bar[4]+mem_byte_offset)+increment_value);
         //get_random_bytes(&tmp_rand, sizeof(tmp_rand));
         tmp_rand = rand();
+       
         //iowrite32 (cpu_to_le32(tmp_rand), (DWORD *)(bk_ptr->bar[4]+mem_byte_offset)+i);
-        ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR4, mem_byte_offset + i, tmp_rand);
+        ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR4, mem_byte_offset + i*4, tmp_rand);
     }
 
     return 1;
@@ -795,9 +797,9 @@ BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev) {
 	DWORD last_id, write_127 = 0;
     DWORD timeout;
     bk_ptr = InitDMABookkeep();
-    BYTE *rp_rd_buffer_virt_addr;
+    DWORD *rp_rd_buffer_virt_addr;
     rp_rd_buffer_virt_addr = bk_ptr->rp_rd_buffer_virt_addr;
-    BYTE *rp_wr_buffer_virt_addr;
+    DWORD *rp_wr_buffer_virt_addr;
     rp_wr_buffer_virt_addr = bk_ptr->rp_wr_buffer_virt_addr;
     WD_DMA *dma;
     dma = (WD_DMA *)malloc(sizeof(WD_DMA));
@@ -821,11 +823,13 @@ BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev) {
     //BZERO(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptor[0]);
     // DMA read operation
     if (!fromDev) {
-        SetDesc(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptors[0],0x0,  dma->Page[0].pPhysicalAddr, ONCHIP_MEM_BASE_ADDR_HI, ONCHIP_MEM_BASE_ADDR_LOW, 0x00081000, 0); // length is 16KB
+        
+        //SetDesc(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptors[0],0x0,  dma->Page[0].pPhysicalAddr, ONCHIP_MEM_BASE_ADDR_HI, ONCHIP_MEM_BASE_ADDR_LOW, 0x00081000, 0); // length is 16KB
+        SetDesc(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptors[0], 0x0, dma->Page[0].pPhysicalAddr, DDR_MEM_BASE_ADDR_HI, DDR_MEM_BASE_ADDR_LOW, 0x000010, 0);
         // Get the last DMA request ID. If no DMA request, it will return 0xff
         last_id = ALTERA_ReadDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR);
         if (last_id == 0xff) {
-            SetDMADescController(hALTERA, bk_ptr->lite_table_rd_cpu_virt_addr->descriptors, fromDev);
+            SetDMADescController(hALTERA, (DWORD)bk_ptr->lite_table_rd_bus_addr, fromDev);
             last_id = 127;
         }
         //Update ID
@@ -859,7 +863,7 @@ BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev) {
         // Get the last DMA request ID. If no DMA request, it will return 0xff
         last_id = ALTERA_ReadDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_LAST_PTR);
         if (last_id == 0xff) {
-            SetDMADescController(hALTERA, bk_ptr->lite_table_rd_cpu_virt_addr->descriptors, fromDev);
+            SetDMADescController(hALTERA, (DWORD)bk_ptr->lite_table_rd_cpu_virt_addr, fromDev);
             last_id = 127;
         }
         //Update ID

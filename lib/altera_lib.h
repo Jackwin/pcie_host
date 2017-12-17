@@ -24,7 +24,7 @@ extern "C" {
 
     //------------------------- Altera DMA parameters ------------------------------------------
     #define ALTERA_DMA_BAR_NUM (6)
-    #define ALTERA_DMA_DESCRIPTOR_NUM 128
+    #define ALTERA_DMA_DESCRIPTOR_NUM 8
 
     #define ALTERA_DMA_WR_DMA_CTRL          0x0000
     #define ALTERA_DMA_WR_DESC_STATUS       0x0004
@@ -58,11 +58,12 @@ extern "C" {
 
     #define ALTERA_EPLAST_DIFF              1
 
-    #define ALTERA_DMA_NUM_DWORDS           512
+    //#define ALTERA_DMA_NUM_DWORDS           512
+#define ALTERA_DMA_NUM_DWORDS           8
 
     // On-chip 4KB FIFO 0x0000_0000_0800_0000 - 0x0000_0000_0800_ffff
     #define ONCHIP_MEM_BASE_ADDR_HI         0x00000000
-    #define ONCHIP_MEM_BASE_ADDR_LOW        0x00008000
+    #define ONCHIP_MEM_BASE_ADDR_LOW        0x08000000
     #define ONCHIP_MEM_DESC_MEM_BASE        0x0000
 
     //DDR3 128MB 0x0000_0000_0000_0000 - 0x0000_0000_07ff_ffff
@@ -180,9 +181,9 @@ extern "C" {
         DWORD lite_table_wr_bus_addr;
 
         WORD numpages;
-        BYTE *rp_rd_buffer_virt_addr;
+        DWORD *rp_rd_buffer_virt_addr;
         DWORD rp_rd_buffer_bus_addr;
-        BYTE *rp_wr_buffer_virt_addr;
+        DWORD *rp_wr_buffer_virt_addr;
         DWORD rp_wr_buffer_bus_addr;
 
         ALTERA_ADDR addr_space;
@@ -225,10 +226,11 @@ extern "C" {
     BOOL ALTERA_DMAReadWriteBlock(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr, PVOID pBuffer, BOOL fRead, DWORD dwBytes, BOOL fChained);
 
 	WORD init_ep_mem(ALTERA_HANDLE hALTERA, DWORD mem_byte_offset, DWORD num_dwords, BYTE increment);
-	WORD init_rp_mem(BYTE *rp_buffer_virt_addr, DWORD num_dword);
+	WORD init_rp_mem(DWORD *rp_buffer_virt_addr, DWORD num_dword);
 	static int set_lite_table_header(struct lite_dma_header *header);
 	
-	BOOL SetDMADescController(ALTERA_HANDLE phAltera, struct dma_descriptor *dma_desc_table_ptr, BOOL fromDev);
+	//BOOL SetDMADescController(ALTERA_HANDLE phAltera, struct dma_descriptor *dma_desc_table_ptr, BOOL fromDev);
+    BOOL SetDMADescController(ALTERA_HANDLE phAltera, DWORD desc_table_start_addr, BOOL fromDev);
     BOOL SetDesc(struct dma_descriptor *dma_desc, DWORD source_addr_high, DWORD source_addr_low, DWORD dest_addr_high, DWORD dest_addr_low, DWORD ctl_dma_len, WORD id);
 	BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, DWORD dwVendorID, DWORD dwDeviceID);
 
