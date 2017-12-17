@@ -115,6 +115,9 @@
     <ClCompile Include="..\..\lib\altera_lib.c" />
     <ClCompile Include="host.c" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\lib\altera_lib.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

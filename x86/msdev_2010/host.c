@@ -30,6 +30,12 @@ int main() {
     card.num = 1;
     printf("\n");
 
+	printf("long size is %d.\n", sizeof(long));
+	printf("double size is %d.\n", sizeof(double));
+	printf("int size is %d.\n", sizeof(int));
+	printf("word size is %d.\n", sizeof(WORD));
+	printf("dword size is %d.\n", sizeof(DWORD));
+
     DWORD card_num = ALTERA_CountCards(VENDOR_ID, DEVICE_ID);
     printf("%d Altera cards found.\n", card_num);
 /*

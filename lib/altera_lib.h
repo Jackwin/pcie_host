@@ -21,10 +21,6 @@
 extern "C" {
 #endif
 
-    typedef unsigned int u32;
-    typedef unsigned short u16;
-    typedef char u8;
-    typedef unsigned long u64;
 
     //------------------------- Altera DMA parameters ------------------------------------------
     #define ALTERA_DMA_BAR_NUM (6)
@@ -113,8 +109,8 @@ extern "C" {
 	
     typedef struct
     {
-        u32 dwCounter;   // number of interrupts received
-        u32 dwLost;      // number of interrupts not yet dealt with
+        DWORD dwCounter;   // number of interrupts received
+        DWORD dwLost;      // number of interrupts not yet dealt with
         BOOL fStopped;     // was interrupt disabled during wait
     } ALTERA_INT_RESULT;
 
@@ -148,17 +144,17 @@ extern "C" {
     };
 
     struct dma_descriptor {
-        u32 src_addr_low;
-        u32 src_addr_high;
-        u32 dest_addr_low;
-        u32 dest_addr_high;
-        u32 ctl_dma_len;
-        u32 reserved[3];
+        DWORD src_addr_low;
+        DWORD src_addr_high;
+        DWORD dest_addr_low;
+        DWORD dest_addr_high;
+        DWORD ctl_dma_len;
+        DWORD reserved[3];
     };
 
     struct dma_header {
-        u32 eplast;
-        u32 reserved[7];
+        DWORD eplast;
+        DWORD reserved[7];
     };
 
     struct dma_desc_table {
@@ -167,7 +163,7 @@ extern "C" {
     } ;
 
     struct lite_dma_header {
-        volatile u32 flags[128];
+        volatile DWORD flags[128];
     } ;
 
 
@@ -180,14 +176,14 @@ extern "C" {
         struct lite_dma_desc_table *lite_table_rd_cpu_virt_addr;
         struct lite_dma_desc_table *lite_table_wr_cpu_virt_addr;
         // The start address of lite_dms_desc_table
-        u32 lite_table_rd_bus_addr;
-        u32 lite_table_wr_bus_addr;
+        DWORD lite_table_rd_bus_addr;
+        DWORD lite_table_wr_bus_addr;
 
         WORD numpages;
         BYTE *rp_rd_buffer_virt_addr;
-        u32 rp_rd_buffer_bus_addr;
+        DWORD rp_rd_buffer_bus_addr;
         BYTE *rp_wr_buffer_virt_addr;
-        u32 rp_wr_buffer_bus_addr;
+        DWORD rp_wr_buffer_bus_addr;
 
         ALTERA_ADDR addr_space;
         struct dma_status dma_status;
@@ -202,39 +198,39 @@ extern "C" {
 
     typedef void (DLLCALLCONV *ALTERA_INT_HANDLER)( ALTERA_HANDLE hALTERA, ALTERA_INT_RESULT *intResult);
 
-    BOOL ALTERA_Open (ALTERA_HANDLE *phALTERA, u32 dwVendorID, u32 dwDeviceID, u32 nCardNum);
+    BOOL ALTERA_Open (ALTERA_HANDLE *phALTERA, DWORD dwVendorID, DWORD dwDeviceID, DWORD nCardNum);
     void ALTERA_Close(ALTERA_HANDLE hALTERA);
-    u32 ALTERA_CountCards (u32 dwVendorID, u32 dwDeviceID);
+    DWORD ALTERA_CountCards (DWORD dwVendorID, DWORD dwDeviceID);
     BOOL ALTERA_IsAddrSpaceActive(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace);
 
     void ALTERA_GetPciSlot(ALTERA_HANDLE hALTERA, WD_PCI_SLOT *pPciSlot);
 
     // General read/write function
-    void ALTERA_ReadWriteBlock(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, u32 dwOffset, BOOL fRead, PVOID buf, u32 dwBytes, ALTERA_MODE mode);
-    BYTE ALTERA_ReadByte (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, u32 dwOffset);
-    u16 ALTERA_ReadWord (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, u32 dwOffset);
-    UINT32 ALTERA_ReadDword (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, u32 dwOffset);
-    void ALTERA_WriteByte (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, u32 dwOffset, BYTE data);
-    void ALTERA_WriteWord (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, u32 dwOffset, u16 data);
-    void ALTERA_WriteDword (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, u32 dwOffset, UINT32 data);
+    void ALTERA_ReadWriteBlock(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, DWORD dwOffset, BOOL fRead, PVOID buf, DWORD dwBytes, ALTERA_MODE mode);
+    BYTE ALTERA_ReadByte (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, DWORD dwOffset);
+    WORD ALTERA_ReadWord (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, DWORD dwOffset);
+    UINT32 ALTERA_ReadDword (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, DWORD dwOffset);
+    void ALTERA_WriteByte (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, DWORD dwOffset, BYTE data);
+    void ALTERA_WriteWord (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, DWORD dwOffset, WORD data);
+    void ALTERA_WriteDword (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, DWORD dwOffset, UINT32 data);
     // handle interrupts
     BOOL ALTERA_IntIsEnabled (ALTERA_HANDLE hALTERA);
     BOOL ALTERA_IntEnable (ALTERA_HANDLE hALTERA, ALTERA_INT_HANDLER funcIntHandler);
     void ALTERA_IntDisable (ALTERA_HANDLE hALTERA);
     // access to PCI configuration registers
-    void ALTERA_WritePCIReg(ALTERA_HANDLE hALTERA, u32 dwReg, UINT32 dwData);
-    UINT32 ALTERA_ReadPCIReg(ALTERA_HANDLE hALTERA, u32 dwReg);
+    void ALTERA_WritePCIReg(ALTERA_HANDLE hALTERA, DWORD dwReg, UINT32 dwData);
+    UINT32 ALTERA_ReadPCIReg(ALTERA_HANDLE hALTERA, DWORD dwReg);
 
     // Function for performing Scatter/Gather DMA
-    BOOL ALTERA_DMAReadWriteBlock(ALTERA_HANDLE hALTERA, u32 dwLocalAddr, PVOID pBuffer, BOOL fRead, u32 dwBytes, BOOL fChained);
+    BOOL ALTERA_DMAReadWriteBlock(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr, PVOID pBuffer, BOOL fRead, DWORD dwBytes, BOOL fChained);
 
-	u16 init_ep_mem(ALTERA_HANDLE hALTERA, u32 mem_byte_offset, u32 num_dwords, u8 increment);
-	u16 init_rp_mem(BYTE *rp_buffer_virt_addr, u32 num_dword);
+	WORD init_ep_mem(ALTERA_HANDLE hALTERA, DWORD mem_byte_offset, DWORD num_dwords, BYTE increment);
+	WORD init_rp_mem(BYTE *rp_buffer_virt_addr, DWORD num_dword);
 	static int set_lite_table_header(struct lite_dma_header *header);
 	
 	BOOL SetDMADescController(ALTERA_HANDLE phAltera, struct dma_descriptor *dma_desc_table_ptr, BOOL fromDev);
-	BOOL SetDesc(struct dma_descriptor *dma_desc, u32 source, u32 dest, u16 ctl_dma_len, u16 id);
-	BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, u32 dwVendorID, u32 dwDeviceID);
+    BOOL SetDesc(struct dma_descriptor *dma_desc, DWORD source_addr_high, DWORD source_addr_low, DWORD dest_addr_high, DWORD dest_addr_low, DWORD ctl_dma_len, WORD id);
+	BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, DWORD dwVendorID, DWORD dwDeviceID);
 
 	BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev);
     // this string is set to an error message, if one occurs
@@ -282,4 +278,3 @@ extern "C" {
 #endif
 
 #endif
-
