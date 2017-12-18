@@ -698,8 +698,8 @@ BOOL SetDMADescController(ALTERA_HANDLE phAltera, DWORD desc_table_start_addr, B
 
         // Program the on-chip FIFO address to DMA Descriptor Controller, This is the address to which the DMA
         // Descriptor Controller will copy the status and descriptor table from CPU
-        ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTLR_LOW_DEST_ADDR, ONCHIP_MEM_BASE_ADDR_LOW);
-        ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTRL_HIGH_DEST_ADDR, ONCHIP_MEM_BASE_ADDR_HI);
+        ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTLR_LOW_DEST_ADDR, RD_CTRL_BUF_BASE_LOW);
+        ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTRL_HIGH_DEST_ADDR, RD_CTRL_BUF_BASE_HIGH);
     }
     else {
         ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_RC_LOW_SRC_ADDR, desc_table_start_addr);
@@ -707,8 +707,8 @@ BOOL SetDMADescController(ALTERA_HANDLE phAltera, DWORD desc_table_start_addr, B
 
         // Program the on-chip FIFO address to DMA Descriptor Controller, This is the address to which the DMA
         // Descriptor Controller will copy the status and descriptor table from CPU
-        ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_CTLR_LOW_DEST_ADDR, ONCHIP_MEM_BASE_ADDR_LOW);
-        ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_CTRL_HIGH_DEST_ADDR, ONCHIP_MEM_BASE_ADDR_HI);
+        ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_CTLR_LOW_DEST_ADDR, RD_CTRL_BUF_BASE_LOW);
+        ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_CTRL_HIGH_DEST_ADDR, RD_CTRL_BUF_BASE_HIGH);
     }
     return TRUE;
     // Start DMA
@@ -735,14 +735,14 @@ struct altera_pcie_dma_bookkeep *InitDMABookkeep() {
     bk_ptr->dma_status.offset = 0;
     bk_ptr->dma_status.onchip = 1;
     bk_ptr->dma_status.rand = 0;
-	
-	//set_lite_table_header(bk_ptr->lite_table_rd_cpu_virt_addr->header);
+
+    //set_lite_table_header(bk_ptr->lite_table_rd_cpu_virt_addr->header);
     // How to set PAGE_SIZE
     bk_ptr->numpages = (PAGE_SIZE >= MAX_NUM_DWORDS * 4) ? 1 : (int)((MAX_NUM_DWORDS * 4) / PAGE_SIZE);
     // Set descriptor table address
     bk_ptr->lite_table_rd_cpu_virt_addr = (struct lite_dma_desc_table *)malloc(sizeof(struct lite_dma_desc_table));
     bk_ptr->lite_table_wr_cpu_virt_addr = (struct lite_dma_desc_table *)malloc(sizeof(struct lite_dma_desc_table));
-	bk_ptr->lite_table_rd_cpu_virt_addr->header.flags[0] = 0x0;
+    bk_ptr->lite_table_rd_cpu_virt_addr->header.flags[0] = 0x0;
 
     bk_ptr->lite_table_rd_bus_addr = (DWORD)bk_ptr->lite_table_rd_cpu_virt_addr;
     bk_ptr->lite_table_wr_bus_addr = (DWORD)bk_ptr->lite_table_wr_cpu_virt_addr;
@@ -751,7 +751,7 @@ struct altera_pcie_dma_bookkeep *InitDMABookkeep() {
     DWORD *rp_rd_buffer = (DWORD *)malloc(sizeof(BYTE) * PAGE_SIZE * bk_ptr->numpages);
     bk_ptr->rp_rd_buffer_virt_addr = rp_rd_buffer;
     bk_ptr->rp_rd_buffer_bus_addr = (DWORD)rp_rd_buffer;
-    
+
     DWORD *rp_wr_buffer = (DWORD *)malloc(sizeof(BYTE) * PAGE_SIZE * bk_ptr->numpages);
     bk_ptr->rp_wr_buffer_virt_addr = rp_wr_buffer;
     bk_ptr->rp_wr_buffer_bus_addr = (DWORD)rp_wr_buffer;
@@ -781,7 +781,7 @@ WORD init_ep_mem(ALTERA_HANDLE hALTERA, DWORD mem_byte_offset, DWORD num_dwords,
 //       iowrite32 (cpu_to_le32(init_value+increment_value), (DWORD *)(bk_ptr->bar[4]+mem_byte_offset)+increment_value);
         //get_random_bytes(&tmp_rand, sizeof(tmp_rand));
         tmp_rand = rand();
-       
+
         //iowrite32 (cpu_to_le32(tmp_rand), (DWORD *)(bk_ptr->bar[4]+mem_byte_offset)+i);
         ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR4, mem_byte_offset + i*4, tmp_rand);
     }
@@ -794,7 +794,7 @@ BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev) {
 
     BOOL status = FALSE;
     struct altera_pcie_dma_bookkeep *bk_ptr;
-	DWORD last_id, write_127 = 0;
+    DWORD last_id, write_127 = 0;
     DWORD timeout;
     bk_ptr = InitDMABookkeep();
     DWORD *rp_rd_buffer_virt_addr;
@@ -823,7 +823,7 @@ BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev) {
     //BZERO(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptor[0]);
     // DMA read operation
     if (!fromDev) {
-        
+
         //SetDesc(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptors[0],0x0,  dma->Page[0].pPhysicalAddr, ONCHIP_MEM_BASE_ADDR_HI, ONCHIP_MEM_BASE_ADDR_LOW, 0x00081000, 0); // length is 16KB
         SetDesc(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptors[0], 0x0, dma->Page[0].pPhysicalAddr, DDR_MEM_BASE_ADDR_HI, DDR_MEM_BASE_ADDR_LOW, 0x000010, 0);
         // Get the last DMA request ID. If no DMA request, it will return 0xff
@@ -843,7 +843,7 @@ BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev) {
         if (write_127)
             ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, 127);
         ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, last_id);
-		printf("Last_id is %d.\n",last_id);
+        printf("Last_id is %d.\n",last_id);
         timeout = TIMEOUT;
         while (1) {
             if (bk_ptr->lite_table_rd_cpu_virt_addr->header.flags[last_id]) {

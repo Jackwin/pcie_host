@@ -1,0 +1,565 @@
+pwd
+# /home/chunjie/workspace/altera_project/stratix5/software/pcie_host
+cd ../../../
+ls
+# A10_AVMM_DDR4_1
+# A10_AVMM_DDR4_17.0
+# A10_ddr4
+# FAccel
+# FCL
+# rapidIO
+# rtl
+# stratix5
+cd ..
+ls
+# a10_soc
+# altera_project
+# collision_detection_hcl
+# dla-170810-source
+# dsp_builder
+# ethernet
+# hcl
+# mld
+# orca-2016-08-19-4466610
+# rapidIO
+# srio_udp
+# udp
+cd mld
+ls
+# a10_soc
+# ethernet_10G
+# trash
+cd a10_soc
+ls
+# 16.1
+# 17.0
+# 17.0_bck
+# mld_10G_ethernet
+# mld_tcl
+# top_17_0_0_290.qar
+# top_17_0_0_290.qarlog
+# top_17_0_0_290_restored
+# trash
+cd mld_10G_ethernet
+ls
+# altera_eth_top.sdc
+# altera_eth_top.sof
+# altera_eth_top.sv
+# altera_eth_top.sv.bak
+# Arria10_Soc_Ethernet_Design.par
+# core
+# devplatforms
+# filelist.txt
+# hwtesting
+# IP
+# ip_upgrade_port_diff_reports
+# mld_10g
+# out_directory_tmp.txt.tmp
+# output_files
+# platform
+# qdb
+# simulation
+# stp1.stp
+# tmp-clearbox
+# top.archive.rpt
+# top_assignment_defaults.qdf
+# top.csv
+# top.ipregen.rpt
+# top.qpf
+# top.qsf
+cd mld_10g
+ls
+# modelsim
+# rtl
+# tb
+# user_app
+cd modelsim
+# reading modelsim.ini
+ls
+# data_gen_wave.do
+# fifo_170
+# libraries
+# mld_10g.cr.mti
+# mld_10g.mpf
+# mld_10g_sim.tcl
+# mld_10g_sim.tcl~
+# modelsim.ini
+# msim_setup.tcl
+# recv_data_buffer_tb.sv
+# transcript
+# vsim.wlf
+# wave.do
+# work
+do mld_10g_sim.tcl
+# ** Warning: (vlib-34) Library already exists at "fifo_170".
+# /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g
+# /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet
+# /home/chunjie/workspace/mld/a10_soc/*/IP
+# [exec] file_copy
+# List Of Command Line Aliases
+# 
+# file_copy                     -- Copy ROM/RAM files to simulation directory
+# 
+# dev_com                       -- Compile device library files
+# 
+# com                           -- Compile the design files in correct order
+# 
+# elab                          -- Elaborate top level design
+# 
+# elab_debug                    -- Elaborate the top level design with novopt option
+# 
+# ld                            -- Compile all the design files and elaborate the top level design
+# 
+# ld_debug                      -- Compile all the design files and elaborate the top level design with -novopt
+# 
+# 
+# 
+# List Of Variables
+# 
+# TOP_LEVEL_NAME                -- Top level module name.
+#                                  For most designs, this should be overridden
+#                                  to enable the elab/elab_debug aliases.
+# 
+# SYSTEM_INSTANCE_NAME          -- Instantiated system module name inside top level module.
+# 
+# QSYS_SIMDIR                   -- Qsys base simulation directory.
+# 
+# QUARTUS_INSTALL_DIR           -- Quartus installation directory.
+# 
+# USER_DEFINED_COMPILE_OPTIONS  -- User-defined compile options, added to com/dev_com aliases.
+# 
+# USER_DEFINED_VHDL_COMPILE_OPTIONS                 -- User-defined vhdl compile options, added to com/dev_com aliases.
+# 
+# USER_DEFINED_VERILOG_COMPILE_OPTIONS              -- User-defined verilog compile options, added to com/dev_com aliases.
+# 
+# USER_DEFINED_ELAB_OPTIONS     -- User-defined elaboration options, added to elab/elab_debug aliases.
+# [exec] dev_com
+# [exec] com
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5c Compiler 2017.01 Jan 23 2017
+# Start time: 15:38:02 on Dec 15,2017
+# vlog -reportprogress 300 -sv /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/IP/fifo_69x8192/fifo_170/sim/fifo_69x8192_fifo_170_cr3w5xa.v /home/chunjie/workspace/mld/a10_soc/top_17_0_0_290_restored/IP/fifo_69x8192/fifo_170/sim/fifo_69x8192_fifo_170_cr3w5xa.v -work fifo_170 
+# -- Compiling module fifo_69x8192_fifo_170_cr3w5xa
+# ** Warning: /home/chunjie/workspace/mld/a10_soc/top_17_0_0_290_restored/IP/fifo_69x8192/fifo_170/sim/fifo_69x8192_fifo_170_cr3w5xa.v(18): (vlog-2275) 'fifo_69x8192_fifo_170_cr3w5xa' already exists and will be overwritten.
+# -- Compiling module fifo_69x8192_fifo_170_cr3w5xa
+# 
+# Top level modules:
+# 	fifo_69x8192_fifo_170_cr3w5xa
+# End time: 15:38:03 on Dec 15,2017, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 1
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5c Compiler 2017.01 Jan 23 2017
+# Start time: 15:38:03 on Dec 15,2017
+# vlog -reportprogress 300 -sv /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/IP/fifo_74in_37out/fifo_170/sim/fifo_74in_37out_fifo_170_xdsjzha.v /home/chunjie/workspace/mld/a10_soc/top_17_0_0_290_restored/IP/fifo_74in_37out/fifo_170/sim/fifo_74in_37out_fifo_170_xdsjzha.v -work fifo_170 
+# -- Compiling module fifo_74in_37out_fifo_170_xdsjzha
+# ** Warning: /home/chunjie/workspace/mld/a10_soc/top_17_0_0_290_restored/IP/fifo_74in_37out/fifo_170/sim/fifo_74in_37out_fifo_170_xdsjzha.v(18): (vlog-2275) 'fifo_74in_37out_fifo_170_xdsjzha' already exists and will be overwritten.
+# -- Compiling module fifo_74in_37out_fifo_170_xdsjzha
+# 
+# Top level modules:
+# 	fifo_74in_37out_fifo_170_xdsjzha
+# End time: 15:38:03 on Dec 15,2017, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 1
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5c Compiler 2017.01 Jan 23 2017
+# Start time: 15:38:03 on Dec 15,2017
+# vlog -reportprogress 300 -sv /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/IP/fifo_512inx64out/fifo_170/sim/fifo_512inx64out_fifo_170_emnhebq.v -work fifo_170 
+# -- Compiling module fifo_512inx64out_fifo_170_emnhebq
+# 
+# Top level modules:
+# 	fifo_512inx64out_fifo_170_emnhebq
+# End time: 15:38:03 on Dec 15,2017, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5c Compiler 2017.01 Jan 23 2017
+# Start time: 15:38:03 on Dec 15,2017
+# vlog -reportprogress 300 /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/IP/fifo_69x8192/sim/fifo_69x8192.v /home/chunjie/workspace/mld/a10_soc/top_17_0_0_290_restored/IP/fifo_69x8192/sim/fifo_69x8192.v -work fifo_69x8192 
+# -- Compiling module fifo_69x8192
+# ** Warning: /home/chunjie/workspace/mld/a10_soc/top_17_0_0_290_restored/IP/fifo_69x8192/sim/fifo_69x8192.v(6): (vlog-2275) 'fifo_69x8192' already exists and will be overwritten.
+# -- Compiling module fifo_69x8192
+# 
+# Top level modules:
+# 	fifo_69x8192
+# End time: 15:38:03 on Dec 15,2017, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 1
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5c Compiler 2017.01 Jan 23 2017
+# Start time: 15:38:03 on Dec 15,2017
+# vlog -reportprogress 300 /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/IP/fifo_74in_37out/sim/fifo_74in_37out.v /home/chunjie/workspace/mld/a10_soc/top_17_0_0_290_restored/IP/fifo_74in_37out/sim/fifo_74in_37out.v -work fifo_74in_37out 
+# -- Compiling module fifo_74in_37out
+# ** Warning: /home/chunjie/workspace/mld/a10_soc/top_17_0_0_290_restored/IP/fifo_74in_37out/sim/fifo_74in_37out.v(6): (vlog-2275) 'fifo_74in_37out' already exists and will be overwritten.
+# -- Compiling module fifo_74in_37out
+# 
+# Top level modules:
+# 	fifo_74in_37out
+# End time: 15:38:03 on Dec 15,2017, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 1
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5c Compiler 2017.01 Jan 23 2017
+# Start time: 15:38:03 on Dec 15,2017
+# vlog -reportprogress 300 /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/IP/fifo_512inx64out/sim/fifo_512inx64out.v -work fifo_512inx64out 
+# -- Compiling module fifo_512inx64out
+# 
+# Top level modules:
+# 	fifo_512inx64out
+# End time: 15:38:03 on Dec 15,2017, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5c Compiler 2017.01 Jan 23 2017
+# Start time: 15:38:03 on Dec 15,2017
+# vlog -reportprogress 300 -sv /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/tx_data_gen.sv 
+# -- Compiling module tx_data_gen
+# 
+# Top level modules:
+# 	tx_data_gen
+# End time: 15:38:03 on Dec 15,2017, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5c Compiler 2017.01 Jan 23 2017
+# Start time: 15:38:03 on Dec 15,2017
+# vlog -reportprogress 300 -sv /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/rx_data_gen.sv 
+# -- Compiling module rx_data_gen
+# 
+# Top level modules:
+# 	rx_data_gen
+# End time: 15:38:03 on Dec 15,2017, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5c Compiler 2017.01 Jan 23 2017
+# Start time: 15:38:03 on Dec 15,2017
+# vlog -reportprogress 300 -sv /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/data_source_gen.sv 
+# -- Compiling module data_source_gen
+# 
+# Top level modules:
+# 	data_source_gen
+# End time: 15:38:03 on Dec 15,2017, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5c Compiler 2017.01 Jan 23 2017
+# Start time: 15:38:03 on Dec 15,2017
+# vlog -reportprogress 300 -sv /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/recv_data_buffer.sv 
+# -- Compiling module recv_data_buffer
+# ** Warning: /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/recv_data_buffer.sv(228): (vlog-2182) 'fifo_dout_val' might be read before written in always_comb or always @* block.
+# 
+# Top level modules:
+# 	recv_data_buffer
+# End time: 15:38:03 on Dec 15,2017, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 1
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5c Compiler 2017.01 Jan 23 2017
+# Start time: 15:38:03 on Dec 15,2017
+# vlog -reportprogress 300 -sv /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/send_data_buffer.sv 
+# -- Compiling module send_data_buffer
+# 
+# Top level modules:
+# 	send_data_buffer
+# End time: 15:38:03 on Dec 15,2017, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5c Compiler 2017.01 Jan 23 2017
+# Start time: 15:38:03 on Dec 15,2017
+# vlog -reportprogress 300 -sv /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/emif_buffer.sv 
+# -- Compiling module emif_buffer
+# 
+# Top level modules:
+# 	emif_buffer
+# End time: 15:38:03 on Dec 15,2017, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5c Compiler 2017.01 Jan 23 2017
+# Start time: 15:38:03 on Dec 15,2017
+# vlog -reportprogress 300 -sv /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv 
+# -- Compiling module recv_data_buffer_tb
+# ** Warning: /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv(589): (vlog-2697) MSB of part-select into 'ddr_emif_read_data' is out of bounds.
+# 
+# Top level modules:
+# 	recv_data_buffer_tb
+# End time: 15:38:03 on Dec 15,2017, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 1
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5c Compiler 2017.01 Jan 23 2017
+# Start time: 15:38:03 on Dec 15,2017
+# vlog -reportprogress 300 -sv /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/avl_data_gen.v 
+# -- Compiling module avl_data_gen
+# -- Compiling module prbs23
+# 
+# Top level modules:
+# 	avl_data_gen
+# End time: 15:38:04 on Dec 15,2017, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5c Compiler 2017.01 Jan 23 2017
+# Start time: 15:38:04 on Dec 15,2017
+# vlog -reportprogress 300 -v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/altera_avalon_dc_fifo.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/altera_dcfifo_synchronizer_bundle.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/avalon_st_gen.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/avalon_st_mon.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/avalon_st_prtmux.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/avalon_st_traffic_controller.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/avalon_st_traffic_controller_top.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_ctrl.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_data.v 
+# -- Compiling module altera_dcfifo_synchronizer_bundle
+# -- Compiling module avalon_st_gen
+# -- Compiling module prbs23
+# -- Compiling module avalon_st_mon
+# -- Compiling module avalon_st_prtmux
+# -- Compiling module avalon_st_traffic_controller
+# -- Compiling module traffic_reset_sync
+# -- Compiling module avalon_st_traffic_controller_top
+# -- Compiling module shiftreg_ctrl
+# -- Compiling module shiftreg_data
+# -- Scanning library file '/home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/altera_avalon_dc_fifo.v'
+# 
+# Referenced (but uncompiled) modules or primitives:
+# 	altera_std_synchronizer
+# 	crc32_gen
+# 	crc32_chk
+# 	tx_data_gen
+# 	send_data_buffer
+# 	avalon_st_loopback
+# 	altera_avalon_mm_clock_crossing_bridge
+# 	altshift_taps
+# 
+# Top level modules:
+# 	altera_dcfifo_synchronizer_bundle
+# 	avalon_st_gen
+# 	avalon_st_prtmux
+# 	avalon_st_traffic_controller_top
+# End time: 15:38:04 on Dec 15,2017, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5c Compiler 2017.01 Jan 23 2017
+# Start time: 15:38:04 on Dec 15,2017
+# vlog -reportprogress 300 -v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/avalon_st_to_crc_if_bridge.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/bit_endian_converter.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/byte_endian_converter.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_calculator.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_chk.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_gen.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc_checksum_aligner.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc_comparator.v 
+# -- Compiling module bit_endian_converter
+# -- Compiling module byte_endian_converter
+# -- Compiling module crc32_calculator
+# -- Compiling module crc32_chk
+# -- Compiling module crc32_gen
+# -- Compiling module crc_checksum_aligner
+# -- Compiling module crc_comparator
+# -- Scanning library file '/home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/avalon_st_to_crc_if_bridge.v'
+# -- Compiling module avalon_st_to_crc_if_bridge
+# -- Scanning library file '/home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/avalon_st_to_crc_if_bridge.v'
+# 
+# Referenced (but uncompiled) modules or primitives:
+# 	crc_ethernet
+# 
+# Top level modules:
+# 	bit_endian_converter
+# 	crc32_chk
+# 	crc32_gen
+# End time: 15:38:04 on Dec 15,2017, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5c Compiler 2017.01 Jan 23 2017
+# Start time: 15:38:04 on Dec 15,2017
+# vlog -reportprogress 300 -v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_lib/crc32_dat16.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_lib/crc32_dat24.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_lib/crc32_dat32.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_lib/crc32_dat32_any_byte.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_lib/crc32_dat40.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_lib/crc32_dat48.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_lib/crc32_dat56.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_lib/crc32_dat64.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_lib/crc32_dat64_any_byte.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_lib/crc32_dat8.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_lib/crc_ethernet.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_lib/crc_register.v /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_lib/xor6.v 
+# -- Compiling module crc32_dat24
+# -- Compiling module crc32_dat24_flat
+# -- Compiling module crc32_dat24_factor
+# -- Compiling module crc32_dat32
+# -- Compiling module crc32_dat32_flat
+# -- Compiling module crc32_dat32_factor
+# -- Compiling module crc32_dat32_any_byte
+# -- Compiling module crc32_dat40
+# -- Compiling module crc32_dat40_flat
+# -- Compiling module crc32_dat40_factor
+# -- Compiling module crc32_dat48
+# -- Compiling module crc32_dat48_flat
+# -- Compiling module crc32_dat48_factor
+# -- Compiling module crc32_dat56
+# -- Compiling module crc32_dat56_flat
+# -- Compiling module crc32_dat56_factor
+# -- Compiling module crc32_dat64
+# -- Compiling module crc32_dat64_flat
+# -- Compiling module crc32_dat64_factor
+# -- Compiling module crc32_dat64_any_byte
+# -- Compiling module crc32_dat8
+# -- Compiling module crc32_dat8_flat
+# -- Compiling module crc32_dat8_factor
+# -- Compiling module crc_ethernet
+# -- Compiling module crc_register
+# -- Compiling module xor6
+# -- Scanning library file '/home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_lib/crc32_dat16.v'
+# -- Compiling module crc32_dat16
+# -- Compiling module crc32_dat16_flat
+# -- Compiling module crc32_dat16_factor
+# -- Scanning library file '/home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_lib/crc32_dat16.v'
+# 
+# Referenced (but uncompiled) modules or primitives:
+# 	stratixii_lcell_ff
+# 
+# Top level modules:
+# 	crc_ethernet
+# End time: 15:38:04 on Dec 15,2017, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# recv_data_buffer_tb
+# [exec] elab
+# vsim -t ps -L work -L work_lib -L fifo_170 -L fifo_69x8192 -L fifo_74in_37out -L fifo_512inx64out -L altera_ver -L lpm_ver -L sgate_ver -L altera_mf_ver -L altera_lnsim_ver -L twentynm_ver -L twentynm_hssi_ver -L twentynm_hip_ver recv_data_buffer_tb 
+# Start time: 15:38:04 on Dec 15,2017
+# Loading sv_std.std
+# Loading work.recv_data_buffer_tb
+# Loading work.rx_data_gen
+# Loading work.recv_data_buffer
+# Loading fifo_74in_37out.fifo_74in_37out
+# Loading fifo_170.fifo_74in_37out_fifo_170_xdsjzha
+# Loading altera_mf_ver.dcfifo_mixed_widths
+# Loading altera_mf_ver.ALTERA_DEVICE_FAMILIES
+# Loading altera_mf_ver.dcfifo_low_latency
+# Loading altera_mf_ver.ALTERA_MF_HINT_EVALUATION
+# Loading altera_mf_ver.dcfifo_dffpipe
+# Loading work.data_source_gen
+# Loading work.crc32_gen
+# Loading work.crc32_calculator
+# Loading work.avalon_st_to_crc_if_bridge
+# Loading work.byte_endian_converter
+# Loading work.crc_ethernet
+# Loading work.crc_register
+# Loading work.crc_checksum_aligner
+# Loading work.shiftreg_data
+# Loading altera_mf_ver.altshift_taps
+# Loading work.shiftreg_ctrl
+# Loading work.tx_data_gen
+# Loading work.send_data_buffer
+# Loading fifo_69x8192.fifo_69x8192
+# Loading fifo_170.fifo_69x8192_fifo_170_cr3w5xa
+# Loading altera_mf_ver.dcfifo
+# Loading work.avalon_st_gen
+# Loading work.prbs23
+# Loading work.avl_data_gen
+# Loading work.emif_buffer
+# Loading fifo_512inx64out.fifo_512inx64out
+# Loading fifo_170.fifo_512inx64out_fifo_170_emnhebq
+# Loading altera_mf_ver.dcfifo_async
+# Loading altera_mf_ver.dcfifo_fefifo
+# Loading work.crc32_dat64_any_byte
+# Loading work.crc32_dat8
+# Loading work.crc32_dat16
+# Loading work.crc32_dat24
+# Loading work.crc32_dat32
+# Loading work.crc32_dat40
+# Loading work.crc32_dat48
+# Loading work.crc32_dat56
+# Loading work.crc32_dat64
+# Loading work.crc32_dat8_factor
+# Loading work.xor6
+# Loading work.crc32_dat16_factor
+# Loading work.crc32_dat24_factor
+# Loading work.crc32_dat32_factor
+# Loading work.crc32_dat40_factor
+# Loading work.crc32_dat48_factor
+# Loading work.crc32_dat56_factor
+# Loading work.crc32_dat64_factor
+# ** Warning: (vsim-3015) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv(297): [PCDPC] - Port size (32) does not match connection size (64) for port 'avl_st_tx_data'. The port definition is at: /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/recv_data_buffer.sv(31).
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/recv_data_buffer_i File: /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/recv_data_buffer.sv
+# ** Warning: (vsim-3015) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv(297): [PCDPC] - Port size (2) does not match connection size (3) for port 'avl_st_tx_empty'. The port definition is at: /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/recv_data_buffer.sv(32).
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/recv_data_buffer_i File: /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/recv_data_buffer.sv
+# ** Warning: (vsim-3017) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/data_source_gen.sv(610): [TFMPC] - Too few port connections. Expected 10, found 9.
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/data_source_gen_i/crc32_gen_inst File: /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_gen.v
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/data_source_gen.sv(610): [TFMPC] - Missing connection for port 'AVST_READY'.
+# ** Warning: (vsim-3017) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_data.v(80): [TFMPC] - Too few port connections. Expected 7, found 6.
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/data_source_gen_i/shiftreg_data_inst/ALTSHIFT_TAPS_component File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3016) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_data.v(80): Port type is incompatible with connection (port 'aclr').
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/data_source_gen_i/shiftreg_data_inst/ALTSHIFT_TAPS_component File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_data.v(80): [TFMPC] - Missing connection for port 'sclr'.
+# ** Warning: (vsim-3017) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_ctrl.v(80): [TFMPC] - Too few port connections. Expected 7, found 6.
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/data_source_gen_i/shiftreg_ctrl_inst/ALTSHIFT_TAPS_component File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3016) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_ctrl.v(80): Port type is incompatible with connection (port 'aclr').
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/data_source_gen_i/shiftreg_ctrl_inst/ALTSHIFT_TAPS_component File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_ctrl.v(80): [TFMPC] - Missing connection for port 'sclr'.
+# ** Warning: (vsim-3017) /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v(31784): [TFMPC] - Too few port connections. Expected 14, found 13.
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/send_data_buffer_i/recv_fifo_inst/fifo_0/dcfifo_component/DCFIFO_MW File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3722) /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v(31784): [TFMPC] - Missing connection for port 'eccstatus'.
+# ** Warning: (vsim-3017) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/send_data_buffer.sv(339): [TFMPC] - Too few port connections. Expected 10, found 9.
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/send_data_buffer_i/crc32_gen_inst File: /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_gen.v
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/send_data_buffer.sv(339): [TFMPC] - Missing connection for port 'AVST_READY'.
+# ** Warning: (vsim-3017) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_data.v(80): [TFMPC] - Too few port connections. Expected 7, found 6.
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/send_data_buffer_i/shiftreg_data_inst/ALTSHIFT_TAPS_component File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3016) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_data.v(80): Port type is incompatible with connection (port 'aclr').
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/send_data_buffer_i/shiftreg_data_inst/ALTSHIFT_TAPS_component File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_data.v(80): [TFMPC] - Missing connection for port 'sclr'.
+# ** Warning: (vsim-3017) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_ctrl.v(80): [TFMPC] - Too few port connections. Expected 7, found 6.
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/send_data_buffer_i/shiftreg_ctrl_inst/ALTSHIFT_TAPS_component File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3016) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_ctrl.v(80): Port type is incompatible with connection (port 'aclr').
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/send_data_buffer_i/shiftreg_ctrl_inst/ALTSHIFT_TAPS_component File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_ctrl.v(80): [TFMPC] - Missing connection for port 'sclr'.
+# ** Warning: (vsim-3839) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv(397): Variable '/recv_data_buffer_tb/waitrequest', driven via a port connection, is multiply driven. See /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv(325).
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/avalon_st_gen_i File: /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/avalon_st_gen.v
+# ** Warning: (vsim-3839) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv(397): Variable '/recv_data_buffer_tb/readdata', driven via a port connection, is multiply driven. See /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv(325).
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/avalon_st_gen_i File: /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/avalon_st_gen.v
+# ** Warning: (vsim-3015) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv(397): [PCDPC] - Port size (64) does not match connection size (1) for port 'tx_data'. The port definition is at: /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/avalon_st_gen.v(51).
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/avalon_st_gen_i File: /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/avalon_st_gen.v
+# ** Warning: (vsim-3015) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv(397): [PCDPC] - Port size (3) does not match connection size (1) for port 'tx_empty'. The port definition is at: /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/avalon_st_gen.v(55).
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/avalon_st_gen_i File: /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/avalon_st_gen.v
+# ** Warning: (vsim-3017) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/avalon_st_gen.v(666): [TFMPC] - Too few port connections. Expected 10, found 9.
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/avalon_st_gen_i/crc32_gen_inst File: /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_gen.v
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/avalon_st_gen.v(666): [TFMPC] - Missing connection for port 'AVST_READY'.
+# ** Warning: (vsim-3017) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_data.v(80): [TFMPC] - Too few port connections. Expected 7, found 6.
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/avalon_st_gen_i/shiftreg_data_inst/ALTSHIFT_TAPS_component File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3016) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_data.v(80): Port type is incompatible with connection (port 'aclr').
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/avalon_st_gen_i/shiftreg_data_inst/ALTSHIFT_TAPS_component File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_data.v(80): [TFMPC] - Missing connection for port 'sclr'.
+# ** Warning: (vsim-3017) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_ctrl.v(80): [TFMPC] - Too few port connections. Expected 7, found 6.
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/avalon_st_gen_i/shiftreg_ctrl_inst/ALTSHIFT_TAPS_component File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3016) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_ctrl.v(80): Port type is incompatible with connection (port 'aclr').
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/avalon_st_gen_i/shiftreg_ctrl_inst/ALTSHIFT_TAPS_component File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_ctrl.v(80): [TFMPC] - Missing connection for port 'sclr'.
+# ** Warning: (vsim-3017) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv(420): [TFMPC] - Too few port connections. Expected 21, found 15.
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/avl_data_gen_i File: /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/avl_data_gen.v
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv(420): [TFMPC] - Missing connection for port 'address'.
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv(420): [TFMPC] - Missing connection for port 'write'.
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv(420): [TFMPC] - Missing connection for port 'read'.
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv(420): [TFMPC] - Missing connection for port 'waitrequest'.
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv(420): [TFMPC] - Missing connection for port 'writedata'.
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv(420): [TFMPC] - Missing connection for port 'readdata'.
+# ** Warning: (vsim-3017) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/avl_data_gen.v(691): [TFMPC] - Too few port connections. Expected 10, found 9.
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/avl_data_gen_i/crc32_gen_inst File: /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/crc32/crc32_gen.v
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/avl_data_gen.v(691): [TFMPC] - Missing connection for port 'AVST_READY'.
+# ** Warning: (vsim-3017) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_data.v(80): [TFMPC] - Too few port connections. Expected 7, found 6.
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/avl_data_gen_i/shiftreg_data_inst/ALTSHIFT_TAPS_component File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3016) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_data.v(80): Port type is incompatible with connection (port 'aclr').
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/avl_data_gen_i/shiftreg_data_inst/ALTSHIFT_TAPS_component File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_data.v(80): [TFMPC] - Missing connection for port 'sclr'.
+# ** Warning: (vsim-3017) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_ctrl.v(80): [TFMPC] - Too few port connections. Expected 7, found 6.
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/avl_data_gen_i/shiftreg_ctrl_inst/ALTSHIFT_TAPS_component File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3016) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_ctrl.v(80): Port type is incompatible with connection (port 'aclr').
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/avl_data_gen_i/shiftreg_ctrl_inst/ALTSHIFT_TAPS_component File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3722) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/core/eth_traffic_controller/shiftreg_ctrl.v(80): [TFMPC] - Missing connection for port 'sclr'.
+# ** Warning: (vsim-3015) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/emif_buffer.sv(503): [PCDPC] - Port size (69) does not match connection size (65) for port 'data'. The port definition is at: /home/chunjie/workspace/mld/a10_soc/top_17_0_0_290_restored/IP/fifo_69x8192/sim/fifo_69x8192.v(7).
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/emif_buffer_i/fifo_64inx128_i File: /home/chunjie/workspace/mld/a10_soc/top_17_0_0_290_restored/IP/fifo_69x8192/sim/fifo_69x8192.v
+# ** Warning: (vsim-3015) /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/rtl/emif_buffer.sv(503): [PCDPC] - Port size (69) does not match connection size (65) for port 'q'. The port definition is at: /home/chunjie/workspace/mld/a10_soc/top_17_0_0_290_restored/IP/fifo_69x8192/sim/fifo_69x8192.v(12).
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/emif_buffer_i/fifo_64inx128_i File: /home/chunjie/workspace/mld/a10_soc/top_17_0_0_290_restored/IP/fifo_69x8192/sim/fifo_69x8192.v
+# ** Warning: (vsim-3017) /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v(31784): [TFMPC] - Too few port connections. Expected 14, found 13.
+#    Time: 0 ps  Iteration: 0  Instance: /recv_data_buffer_tb/emif_buffer_i/fifo_64inx128_i/fifo_0/dcfifo_component/DCFIFO_MW File: /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v
+# ** Warning: (vsim-3722) /build/swbuild/SJ/nightly/17.0/290/l64/work/modelsim/eda/sim_lib/altera_mf.v(31784): [TFMPC] - Missing connection for port 'eccstatus'.
+# WARNING: No extended dataflow license exists
+# Send   1 packets and every packet size is   123 bytes and packet number is   0.
+# $time: write addr is 000002, write_data is 00010203040506070000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000010001020304050607.
+# 
+# $time: byte write enable is ff00000000000000.
+# 
+# $time: write addr is 000002, write_data is 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f30313233343536373031323334353637.
+# 
+# $time: byte write enable is 00ffffffffffffff.
+# 
+# $time: write addr is 000002, write_data is 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f.
+# 
+# $time: byte write enable is ffffffffffffffff.
+# 
+# $time: write addr is 000002, write_data is 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f.
+# 
+# $time: byte write enable is ffffffffffffffff.
+# 
+# $time: write addr is 000003, write_data is 404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f70717273747576777071727374757677.
+# 
+# $time: byte write enable is 00ffffffffffffff.
+# 
+# Send   3 packets and every packet size is   123 bytes and packet number is   0.
+# $time: write addr is 000002, write_data is 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f.
+# 
+# $time: byte write enable is ffffffffffffffff.
+# 
+# $time: write addr is 000003, write_data is 404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f.
+# 
+# $time: byte write enable is ffffffffffffffff.
+# 
+# data_source->@1470000: Send   1 packets and every packet size is    34 bytes and packet number is   0.
+# $time: write addr is 000002, write_data is 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f.
+# 
+# $time: byte write enable is ffffffffffffffff.
+# 
+# $time: write addr is 000003, write_data is 404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f.
+# 
+# $time: byte write enable is ffffffffffffffff.
+# 
+# $time: write addr is 000004, write_data is 8081828384858687505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f8081828384858687.
+# 
+# $time: byte write enable is ff00000000000000.
+# 
+# $time: read address is 0x0000002, read burst is   0.
+# 
+# $time: read address is 0x0000008, read burst is   0.
+# 
+# $time: read address is 0x0000008, read burst is   0.
+# 
+# Send   3 packets and every packet size is   123 bytes and packet number is   1.
+# Send   3 packets and every packet size is   123 bytes and packet number is   2.
+# ** Note: $stop    : /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv(168)
+#    Time: 10173200 ps  Iteration: 0  Instance: /recv_data_buffer_tb
+# Break in Module recv_data_buffer_tb at /home/chunjie/workspace/mld/a10_soc/mld_10G_ethernet/mld_10g/tb/recv_data_buffer_tb.sv line 168
