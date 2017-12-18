@@ -24,7 +24,7 @@ extern "C" {
 
     //------------------------- Altera DMA parameters ------------------------------------------
     #define ALTERA_DMA_BAR_NUM (6)
-    #define ALTERA_DMA_DESCRIPTOR_NUM 8
+    #define ALTERA_DMA_DESCRIPTOR_NUM 128
 
     #define ALTERA_DMA_WR_DMA_CTRL          0x0000
     #define ALTERA_DMA_WR_DESC_STATUS       0x0004
@@ -49,12 +49,14 @@ extern "C" {
     #define ALTERA_LITE_DMA_RD_CTLR_LOW_DEST_ADDR   0x0008
     #define ALTERA_LITE_DMA_RD_CTRL_HIGH_DEST_ADDR  0x000C
     #define ALTERA_LITE_DMA_RD_LAST_PTR             0x0010
+    #define ALTERA_LITE_DMA_RD_TABLE_SIZE           0x0014
 
     #define ALTERA_LITE_DMA_WR_RC_LOW_SRC_ADDR      0x0100
     #define ALTERA_LITE_DMA_WR_RC_HIGH_SRC_ADDR     0x0104
     #define ALTERA_LITE_DMA_WR_CTLR_LOW_DEST_ADDR   0x0108
     #define ALTERA_LITE_DMA_WR_CTRL_HIGH_DEST_ADDR  0x010C
     #define ALTERA_LITE_DMA_WR_LAST_PTR             0x0110
+    #define ALTERA_LITE_DMA_WR_TABLE_SIZE           0x0114
 
     #define ALTERA_EPLAST_DIFF              1
 
