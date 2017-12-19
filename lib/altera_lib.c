@@ -546,6 +546,27 @@ BOOL ALTERA_DMALock(ALTERA_HANDLE hALTERA, PVOID pBuffer, DWORD dwBytes,
     return TRUE;
 }
 
+BOOL ALTERA_ContinueDMALock(ALTERA_HANDLE hALTERA, PVOID pBuffer, DWORD dwBytes,
+                    BOOL fFromDev, WD_DMA *pDma)
+{
+    DWORD dwStatus;
+
+    /* Perform Scatter/Gather DMA: */
+    BZERO(*pDma);
+    pDma->pUserAddr = pBuffer;
+    pDma->dwBytes = dwBytes;
+    pDma->dwOptions = DMA_KERNEL_BUFFER_ALLOC | (fFromDev ? DMA_FROM_DEVICE : DMA_TO_DEVICE);
+    pDma->hCard = hALTERA->cardReg.hCard;
+    dwStatus = WD_DMALock(hALTERA->hWD, pDma);
+    if (dwStatus)
+    {
+        sprintf(ALTERA_ErrorString, "cannot lock down buffer. "
+                "Status 0x%lx - %s\n", dwStatus, Stat2Str(dwStatus));
+        return FALSE;
+    }
+    return TRUE;
+}
+
 void ALTERA_DMAUnlock(ALTERA_HANDLE hALTERA, WD_DMA *pDma)
 {
     WD_DMAUnlock(hALTERA->hWD, pDma);
@@ -695,7 +716,7 @@ BOOL SetDMADescController(ALTERA_HANDLE phAltera, DWORD desc_table_start_addr, B
         // Program the address of descriptor table to DMA descriptor controller
         ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_HIGH_SRC_ADDR, 0);
         ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_LOW_SRC_ADDR, desc_table_start_addr);
-        
+
         // Program the on-chip FIFO address to DMA Descriptor Controller, This is the address to which the DMA
         // Descriptor Controller will copy the status and descriptor table from CPU
         ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTRL_HIGH_DEST_ADDR, RD_CTRL_BUF_BASE_HI);
@@ -705,13 +726,13 @@ BOOL SetDMADescController(ALTERA_HANDLE phAltera, DWORD desc_table_start_addr, B
     else {
         ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_RC_HIGH_SRC_ADDR, 0);
         ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_RC_LOW_SRC_ADDR, desc_table_start_addr);
-        
+
         // Program the on-chip FIFO address to DMA Descriptor Controller, This is the address to which the DMA
         // Descriptor Controller will copy the status and descriptor table from CPU
         ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_CTRL_HIGH_DEST_ADDR, RD_CTRL_BUF_BASE_HI);
         ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_CTLR_LOW_DEST_ADDR, RD_CTRL_BUF_BASE_LOW);
         ALTERA_WriteDword(phAltera, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_TABLE_SIZE, 0x00);
-        
+
     }
     return TRUE;
     // Start DMA
@@ -817,9 +838,11 @@ BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev) {
 
     PVOID pbuffer = malloc(2000);
     // Lock memory for DMA
-    if (!ALTERA_DMALock(hALTERA, rp_rd_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords, fromDev, dma))
+    if (!ALTERA_ContinueDMALock(hALTERA, NULL, bk_ptr->dma_status.altera_dma_num_dwords, fromDev, dma))
         return FALSE;
-
+    memset(dma->pUserAddr, dma->Page[0].dwBytes, sizeof(BYTE));
+    init_rp_mem(dma->Page[0].pPhysicalAddr,dma->Page[0].dwBytes);
+    printf("dma_num is %d bytes, and the applied size from DMA is %d bytes.\n",bk_ptr->dma_status.altera_dma_num_dwords * sizeof(DWORD), dma->Page[0].dwBytes);
 
     // Init DDR Memory
     //init_ep_mem(hALTERA, ALTERA_AD_BAR4, bk_ptr->dma_status.altera_dma_num_dwords, 0);
@@ -851,6 +874,7 @@ BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev) {
         printf("Last_id is %d.\n",last_id);
         timeout = TIMEOUT;
         while (1) {
+            DOWRD status = ALTERA_ReadDword(hALTERA,);
             if (bk_ptr->lite_table_rd_cpu_virt_addr->header.flags[last_id]) {
                 break;
             }
