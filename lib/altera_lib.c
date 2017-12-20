@@ -12,6 +12,7 @@
 #include "status_strings.h"
 #include <stdio.h>
 
+
 /* This string is set to an error message, if one occurs */
 CHAR ALTERA_ErrorString[1024];
 typedef struct
@@ -341,7 +342,7 @@ BYTE ALTERA_ReadByte(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
 }
 
 WORD ALTERA_ReadWord(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace,
-                    DWORD dwOffset)
+                     DWORD dwOffset)
 {
     WORD data;
     if (hALTERA->addrDesc[addrSpace].fIsMemory)
@@ -505,7 +506,7 @@ BOOL ALTERA_DMAWait(ALTERA_HANDLE hALTERA)
     {
         WD_SLEEP sleep = {2, 0}; /* 2 microseconds */
         DWORD dwDMAISR = ALTERA_ReadDword(hALTERA, ALTERA_AD_BAR0,
-                                        ALTERA_REG_DMAISR);
+                                          ALTERA_REG_DMAISR);
         if (dwDMAISR & TX_COMP)
         {
             fOk = TRUE;
@@ -547,7 +548,7 @@ BOOL ALTERA_DMALock(ALTERA_HANDLE hALTERA, PVOID pBuffer, DWORD dwBytes,
 }
 
 BOOL ALTERA_ContinueDMALock(ALTERA_HANDLE hALTERA, PVOID pBuffer, DWORD dwBytes,
-                    BOOL fFromDev, WD_DMA *pDma)
+                            BOOL fFromDev, WD_DMA *pDma)
 {
     DWORD dwStatus;
 
@@ -791,7 +792,7 @@ WORD init_rp_mem(DWORD *rp_buffer_virt_addr, DWORD num_dword) {
     for (i = 0; i < num_dword; i++) {
         tmp_rand = rand();
         printf("init_rp_mem tmp_rand is 0x%X.\n", tmp_rand);
-        *(rp_buffer_virt_addr + i*sizeof(DWORD)) = tmp_rand;
+        *(rp_buffer_virt_addr + i * sizeof(DWORD)) = tmp_rand;
     }
     return 1;
 }
@@ -807,14 +808,30 @@ WORD init_ep_mem(ALTERA_HANDLE hALTERA, DWORD mem_byte_offset, DWORD num_dwords,
         tmp_rand = rand();
 
         //iowrite32 (cpu_to_le32(tmp_rand), (DWORD *)(bk_ptr->bar[4]+mem_byte_offset)+i);
-        ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR4, mem_byte_offset + i*4, tmp_rand);
+        ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR4, mem_byte_offset + i * 4, tmp_rand);
     }
 
     return 1;
 }
-
+/* DMAOpen: Locks a Scatter/Gather DMA buffer */
+BOOL DMAOpen (WDC_DEVICE_HANDLE hDev, PVOID *ppBuf, DWORD dwDMABufSize, BOOL fToDev, WD_DMA **ppDMA) {
+    DWORD dwStatus;
+    DWORD dwStatus, i;
+    DWORD dwOptions = fToDev ? DMA_TO_DEVICE : DMA_FROM_DEVICE;
+    /* Lock a Scatter/Gather DMA buffer */
+    dwStatus = WDC_DMASGBufLock(hDev, pBuf, dwOptions, dwDMABufSize, ppDma);
+    if (WD_STATUS_SUCCESS != dwStatus)
+    {
+        printf("Failed locking a Scatter/Gather DMA buffer. Error 0x%lx - %s\n",
+               dwStatus, Stat2Str(dwStatus));
+        return FALSE;
+    }
+    /* Program the device's DMA registers for each physical page */
+//    MyDMAProgram((*ppDma)->Page, (*ppDma)->dwPages, fToDev);
+    return TRUE;
+}
 // DMA READ -> Move data from CPU to FPGA
-BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev) {
+BOOL ALTERA_DMABlock(WDC_DEVICE_HANDLE hDev, ALTERA_HANDLE hALTERA, BOOL fromDev) {
 
     BOOL status = FALSE;
     struct altera_pcie_dma_bookkeep *bk_ptr;
@@ -825,8 +842,9 @@ BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev) {
     rp_rd_buffer_virt_addr = bk_ptr->rp_rd_buffer_virt_addr;
     DWORD *rp_wr_buffer_virt_addr;
     rp_wr_buffer_virt_addr = bk_ptr->rp_wr_buffer_virt_addr;
-    WD_DMA *dma;
-    dma = (WD_DMA *)malloc(sizeof(WD_DMA));
+
+    WD_DMA *pDMA = NULL;
+    PVOID pBuf = NULL;
     //dma->hCard = hALTERA->cardReg.hCard;
     //PVOID pbuffer = malloc(sizeof(BYTE) * PAGE_SIZE * bk_ptr->dma_status.altera_dma_num_dwords*4);
     // Init rd_buffer data
@@ -836,13 +854,17 @@ BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev) {
     memset(rp_wr_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords * 4, sizeof(BYTE));
     init_rp_mem(rp_wr_buffer_virt_addr, bk_ptr->dma_status.altera_dma_num_dwords);
 
-    PVOID pbuffer = malloc(2000);
+    status = DMAOpen(hDEV, &pBuf, bk_ptr->dma_status.altera_dma_num_dwords*sizeof(DWORD),1,&pDMA);
+    if (!status) {
+        printf("Fail to open DMA.\n");
+    }
+    WDC_DMASyncCpu(pDMA);
     // Lock memory for DMA
-    if (!ALTERA_ContinueDMALock(hALTERA, NULL, bk_ptr->dma_status.altera_dma_num_dwords, fromDev, dma))
-        return FALSE;
-    memset(dma->pUserAddr, dma->Page[0].dwBytes, sizeof(BYTE));
-    init_rp_mem(dma->Page[0].pPhysicalAddr,dma->Page[0].dwBytes);
-    printf("dma_num is %d bytes, and the applied size from DMA is %d bytes.\n",bk_ptr->dma_status.altera_dma_num_dwords * sizeof(DWORD), dma->Page[0].dwBytes);
+    //if (!ALTERA_ContinueDMALock(hALTERA, NULL, bk_ptr->dma_status.altera_dma_num_dwords, fromDev, dma))
+    //    return FALSE;
+    //memset(pDMA->pUserAddr, pDMA->Page[0].dwBytes, sizeof(BYTE));
+    init_rp_mem(pDMA->Page[0].pPhysicalAddr, pDMA->Page[0].dwBytes);
+    printf("dma_num is %d bytes, and the applied size from DMA is %d bytes.\n", bk_ptr->dma_status.altera_dma_num_dwords * sizeof(DWORD), dma->Page[0].dwBytes);
 
     // Init DDR Memory
     //init_ep_mem(hALTERA, ALTERA_AD_BAR4, bk_ptr->dma_status.altera_dma_num_dwords, 0);
@@ -871,7 +893,7 @@ BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev) {
         if (write_127)
             ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, 127);
         ALTERA_WriteDword(hALTERA, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, last_id);
-        printf("Last_id is %d.\n",last_id);
+        printf("Last_id is %d.\n", last_id);
         timeout = TIMEOUT;
         while (1) {
             DOWRD status = ALTERA_ReadDword(hALTERA,);
@@ -884,6 +906,8 @@ BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev) {
                 break;
             }
         }
+        WDCDMASyncIo(pDMA);
+        WDC_DMABufUnlock(pDMA);
         return TRUE;
     }
     else {
