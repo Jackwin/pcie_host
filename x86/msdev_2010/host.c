@@ -8,6 +8,7 @@
 #include "samples/shared/pci_regs.h"
 //#include "stratixv_lib.h"
 #include "altera_lib.h"
+#include <time.h>
 
 
 DWORD VENDOR_ID = 0x1172;
@@ -51,15 +52,50 @@ int main() {
         return 0;
         
     }
-
-     status = ALTERA_DMABlock(phALTERA,0);
+     /*
+     status = ALTERA_DMABlock(phALTERA,phALTERA,1);
      if (!status) {
          printf("Fail to Read Altera Device.\n");
          return 0;
 
-     }
+     }*/
+     DWORD *pbuf, *prdbuf;
+     pbuf = (DWORD*)(malloc(sizeof(DWORD) * 512));
+     prdbuf = (DWORD*)(malloc(sizeof(DWORD) * 256));
+     DWORD rdbuf[512];
+    BZERO(rdbuf);
+     DWORD dwBytes = sizeof(DWORD) * 256;
 
+     init_rp_mem(pbuf, 512);
+     time_t start, finish;
+     double result;
+     double totaltime;
+     start = clock();
+   
+     //for (long loop = 0; loop < 10000000; loop++)
+     //    result = 3.63 * 5.27; ;
+  //   sleep(1);
+     for (int i = 0; i < 100; i++) {
+         ALTERA_ReadWriteBlock(phALTERA, AD_PCI_BAR4, 0x00 + 0x1000*i, 0, pbuf, dwBytes, ALTERA_MODE_DWORD);
+     }
+    //ALTERA_ReadWriteBlock(phALTERA, AD_PCI_BAR4, 0x10000, 0, pbuf, dwBytes, ALTERA_MODE_DWORD);
+     //DWORD rddata = ALTERA_ReadDword(phALTERA, AD_PCI_BAR4, 0x3f0);
+     //ALTERA_ReadWriteBlock(phALTERA, AD_PCI_BAR4,0x04, 1, &rdbuf[0], 4, ALTERA_MODE_DWORD);
+     for (int j = 0; j < 100; j++)
+        for (int i = 0; i < 256; i++) {
+             rdbuf[i] = ALTERA_ReadDword(phALTERA, AD_PCI_BAR4, i * 4);
+         }
   
+    // system("pause");
+     //time(&finish);
+     finish = clock();
+
+     totaltime = difftime(finish, start);
+     printf("total time is %lf.\n", totaltime);
+    // printf("the data before last data in prdbuf is %d.\n", *(prdbuf + 254));
+    // printf("last data in prdbuf is %d.\n", *(prdbuf + 255));
+     ///for(int i = 0; i < 16; i++)
+     //   printf("rddata in rdbuf is %x.\n", rdbuf[i]);
 
     ALTERA_Close(phALTERA);
 

@@ -17,7 +17,6 @@
 #include "samples/shared/pci_regs.h"
 #include "samples/shared/bits.h"
 #include "samples/shared/diag_lib.h"
-#include "samples/shared/wdc_diag_lib.h"
 #include "samples/shared/pci_regs.h"
 #include "wdc_defs.h"
 #include "wdc_lib.h"
@@ -243,7 +242,7 @@ BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, DWORD dwVendorID, DWORD dwDevic
 
 BOOL ALTERA_DMABlock(WDC_DEVICE_HANDLE hDev, ALTERA_HANDLE hALTERA, BOOL fromDev);
 BOOL ALTERA_ContinueDMALock(ALTERA_HANDLE hALTERA, PVOID pBuffer, DWORD dwBytes, BOOL fFromDev, WD_DMA *pDma);
-BOOL DMAOpen (WDC_DEVICE_HANDLE hDev, PVOID *ppBuf, DOWRD dwLocalAddr, DWORD dwDMABufSize, BOOL fToDev, WD_DMA **ppDMA);
+BOOL DMAOpen (WDC_DEVICE_HANDLE hDev, PVOID *ppBuf, DWORD dwDMABufSize, BOOL fToDev, WD_DMA **ppDMA);
 // this string is set to an error message, if one occurs
 extern CHAR ALTERA_ErrorString[];
 
