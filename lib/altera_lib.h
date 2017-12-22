@@ -65,7 +65,7 @@ extern "C" {
 #define ALTERA_EPLAST_DIFF              1
 
 //#define ALTERA_DMA_NUM_DWORDS           512
-#define ALTERA_DMA_NUM_DWORDS           8
+#define ALTERA_DMA_NUM_DWORDS           256
 
 // On-chip 4KB FIFO 0x0000_0000_0800_0000 - 0x0000_0000_0800_ffff
 #define ONCHIP_MEM_BASE_ADDR_HI         0x00000000
@@ -86,9 +86,6 @@ extern "C" {
 #define TIMEOUT 0x2000000
 
 /* Internal data structures */
-
-
-
 
 
 
@@ -187,10 +184,10 @@ struct altera_pcie_dma_bookkeep {
     DWORD lite_table_wr_bus_addr;
 
     WORD numpages;
-    DWORD *rp_rd_buffer_virt_addr;
-    DWORD rp_rd_buffer_bus_addr;
-    DWORD *rp_wr_buffer_virt_addr;
-    DWORD rp_wr_buffer_bus_addr;
+    DMA_ADDR *rp_rd_buffer_virt_addr;
+    DMA_ADDR rp_rd_buffer_bus_addr;
+    DMA_ADDR *rp_wr_buffer_virt_addr;
+    DMA_ADDR rp_wr_buffer_bus_addr;
 
     ALTERA_ADDR addr_space;
     struct dma_status dma_status;
