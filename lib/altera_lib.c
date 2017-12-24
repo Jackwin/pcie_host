@@ -789,7 +789,7 @@ DWORD PCI_DRIVER_LibInit(void)
     return WD_STATUS_SUCCESS;
 }
 
-DWORD initialize_PCI(WDC_DEVICE_HANDLE *phDev, DWORD VENDOR_ID, DWORD DEVICE_ID) {
+WDC_DEVICE_HANDLE initialize_PCI( DWORD VENDOR_ID, DWORD DEVICE_ID) {
     WDC_PCI_SCAN_RESULT scanResult;
     WD_PCI_CARD_INFO    deviceInfo;
     DWORD  dwStatus = PCI_DRIVER_LibInit();
@@ -809,8 +809,10 @@ DWORD initialize_PCI(WDC_DEVICE_HANDLE *phDev, DWORD VENDOR_ID, DWORD DEVICE_ID)
     deviceInfo.pciSlot = scanResult.deviceSlot[0];//scanResult.dwNumDevices  - 1
     WDC_PciGetDeviceInfo(&deviceInfo);
 
-     *phDev = PCI_DRIVER_DeviceOpen(&deviceInfo);
-     return 4;
+    WDC_DEVICE_HANDLE  hDev = PCI_DRIVER_DeviceOpen(&deviceInfo);
+    return hDev;
+
+    // return 4;
 
 }
 
@@ -959,7 +961,8 @@ struct altera_pcie_dma_bookkeep *InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA 
     struct altera_pcie_dma_bookkeep *bk_ptr;
     //bk_ptr = (struct altera_pcie_dma_bookkeep *)malloc(sizeof(struct altera_pcie_dma_bookkeep));
    // BZERO(*bk_ptr);
-    PVOID ppbuf = NULL;
+    DWORD * ppbuf ;
+    ppbuf = malloc(sizeof(BYTE) * 512);
     BOOL status = WDC_DMAContigBufLock(hDev, ppbuf, DMA_TO_DEVICE, 512, ppDma);
     if (status != WD_STATUS_SUCCESS) {
         printf("Fail to initiate DMAContigBuf.\n");

@@ -197,7 +197,7 @@ struct altera_pcie_dma_bookkeep {
 
 //------------------------------------------------------------------------------------------------
 BOOL PCI_Get_WD_handle(HANDLE *phWD);
-DWORD initialize_PCI(WDC_DEVICE_HANDLE *phDev, DWORD VENDOR_ID, DWORD DEVICE_ID);
+WDC_DEVICE_HANDLE initialize_PCI(DWORD VENDOR_ID, DWORD DEVICE_ID);
 WDC_DEVICE_HANDLE PCI_DRIVER_DeviceOpen(const WD_PCI_CARD_INFO *pDeviceInfo);
 
 struct altera_pcie_dma_bookkeep *InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA ** ppDma, WD_DMA ** ppDMA_rd_buf);

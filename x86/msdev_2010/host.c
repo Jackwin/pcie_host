@@ -45,11 +45,8 @@ int main() {
     if (!PCI_Get_WD_handle(&hDev)) return 0;
     WD_Close(hDev);
 
-    dwStatus = initialize_PCI(&hDev, VENDOR_ID, DEVICE_ID);
-    if (dwStatus != 4) {
-        printf("Fail to open Altera Device.\n");
-        return 0;
-    }
+    hDev = initialize_PCI(VENDOR_ID, DEVICE_ID);
+
     
 /*
     BOOL status = ALTERA_Open(&phALTERA, card.vendor_id, card.device_id, card.num - 1);
