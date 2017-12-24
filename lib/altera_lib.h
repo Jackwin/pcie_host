@@ -180,8 +180,8 @@ struct altera_pcie_dma_bookkeep {
     struct lite_dma_desc_table *lite_table_rd_cpu_virt_addr;
     struct lite_dma_desc_table *lite_table_wr_cpu_virt_addr;
     // The start address of lite_dms_desc_table
-    DWORD lite_table_rd_bus_addr;
-    DWORD lite_table_wr_bus_addr;
+    DMA_ADDR lite_table_rd_bus_addr;
+    DMA_ADDR lite_table_wr_bus_addr;
 
     WORD numpages;
     DMA_ADDR *rp_rd_buffer_virt_addr;
@@ -196,9 +196,14 @@ struct altera_pcie_dma_bookkeep {
 
 
 //------------------------------------------------------------------------------------------------
+BOOL PCI_Get_WD_handle(HANDLE *phWD);
+DWORD initialize_PCI(WDC_DEVICE_HANDLE *phDev, DWORD VENDOR_ID, DWORD DEVICE_ID);
+WDC_DEVICE_HANDLE PCI_DRIVER_DeviceOpen(const WD_PCI_CARD_INFO *pDeviceInfo);
 
+struct altera_pcie_dma_bookkeep *InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA ** ppDma, WD_DMA ** ppDMA_rd_buf);
 
-struct altera_pcie_dma_bookkeep *InitDMABookkeep();
+static inline BOOL IsValidDevice(PWDC_DEVICE pDev, const CHAR *sFunc);
+static BOOL DeviceValidate(const PWDC_DEVICE pDev);
 
 typedef void (DLLCALLCONV *ALTERA_INT_HANDLER)( ALTERA_HANDLE hALTERA, ALTERA_INT_RESULT *intResult);
 
@@ -233,7 +238,7 @@ WORD init_rp_mem(DWORD *rp_buffer_virt_addr, DWORD num_dword);
 static int set_lite_table_header(struct lite_dma_header *header);
 
 //BOOL SetDMADescController(ALTERA_HANDLE phAltera, struct dma_descriptor *dma_desc_table_ptr, BOOL fromDev);
-BOOL SetDMADescController(ALTERA_HANDLE phAltera, DWORD desc_table_start_addr, BOOL fromDev);
+BOOL SetDMADescController(ALTERA_HANDLE phAltera, DMA_ADDR desc_table_start_addr, BOOL fromDev);
 BOOL SetDesc(struct dma_descriptor *dma_desc, DWORD source_addr_high, DWORD source_addr_low, DWORD dest_addr_high, DWORD dest_addr_low, DWORD ctl_dma_len, WORD id);
 BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, DWORD dwVendorID, DWORD dwDeviceID);
 
