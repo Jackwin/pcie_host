@@ -708,9 +708,9 @@ WDC_DEVICE_HANDLE PCI_DRIVER_DeviceOpen( const WD_PCI_CARD_INFO *pDeviceInfo)
         printf("PCI_DRIVER_DeviceOpen: Error - NULL device information struct pointer\n");
         return NULL;
     }
-    
+
     /* Allocate memory for the PCI_DRIVER device context */
-    
+
     pDevCtx = malloc(sizeof(WDC_DEVICE));
     /*
     if (!pDevCtx)
@@ -963,13 +963,15 @@ struct altera_pcie_dma_bookkeep *InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA 
    // BZERO(*bk_ptr);
     DWORD * ppbuf ;
     ppbuf = malloc(sizeof(BYTE) * 512);
-    BOOL status = WDC_DMAContigBufLock(hDev, ppbuf, DMA_TO_DEVICE, 512, ppDma);
+    DWORD status = WDC_DMAContigBufLock(hDev, ppbuf, DMA_TO_DEVICE, 512, ppDma);
     if (status != WD_STATUS_SUCCESS) {
         printf("Fail to initiate DMAContigBuf.\n");
     }
-    
+
     bk_ptr = (struct altera_pcie_dma_bookkeep *) (*ppDma)->pUserAddr;
-    if (!status) {
+
+    status = WDC_DMASyncCpu(*ppDma);
+    if (WD_STATUS_SUCCESS != status) {
         printf("Fail to CPUSync ppDMA.\n");
     }
     BZERO(*bk_ptr);
@@ -990,13 +992,13 @@ struct altera_pcie_dma_bookkeep *InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA 
     //bk_ptr->lite_table_rd_cpu_virt_addr = (struct lite_dma_desc_table *)malloc(sizeof(struct lite_dma_desc_table));
     //bk_ptr->lite_table_wr_cpu_virt_addr = (struct lite_dma_desc_table *)malloc(sizeof(struct lite_dma_desc_table));
     //bk_ptr->lite_table_rd_cpu_virt_addr->header.flags[0] = 0x0;
-    set_lite_table_header(&(bk_ptr->lite_table_rd_cpu_virt_addr->header));
-    set_lite_table_header(&(bk_ptr->lite_table_wr_cpu_virt_addr->header));
+    set_lite_table_header((struct lite_dma_header *)bk_ptr->lite_table_rd_cpu_virt_addr);
+    set_lite_table_header((struct lite_dma_header *)bk_ptr->lite_table_wr_cpu_virt_addr);
 
    // bk_ptr->lite_table_rd_bus_addr = (DWORD)bk_ptr->lite_table_rd_cpu_virt_addr;
     //bk_ptr->lite_table_wr_bus_addr = (DWORD)bk_ptr->lite_table_wr_cpu_virt_addr;
     bk_ptr->lite_table_rd_bus_addr = (*ppDma)->Page->pPhysicalAddr;
-    status = WDC_DMASyncCpu(*ppDma);
+
     // Apply space for rd buffer
     DWORD *rp_rd_buffer = NULL;
     status = WDC_DMAContigBufLock(hDev, rp_rd_buffer, DMA_TO_DEVICE, 512, ppDMA_rd_buf);
@@ -1090,7 +1092,7 @@ BOOL ALTERA_DMABlock(WDC_DEVICE_HANDLE hDev, ALTERA_HANDLE hALTERA, BOOL fromDev
     //Set descriptor[0]
     //BZERO(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptor[0]);
     // DMA read operation
-   
+
     DWORD DmaPhysicalAddr_h = ((DWORD)(ppDMA_rd_buf)->pUserAddr >> 32) & 0xffffffff;
     DWORD DmaPhysicalAddr_l = (DWORD)(ppDMA_rd_buf)->pUserAddr & 0xffffffff;
     for (int i = 0; i < 128; i++) {
