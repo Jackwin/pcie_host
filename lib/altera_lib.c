@@ -13,7 +13,7 @@
 #include <stdio.h>
 
 #define PCI_DRIVER_DEFAULT_DRIVER_NAME "windrvr6"
-#define PCI_DRIVER_DEFAULT_LICENSE_STRING "6C3CC2CFE89E7AD0425ECCB375D728D6B53BF05F.EMBRACE"
+#define PCI_DRIVER_DEFAULT_LICENSE_STRING "6C3CC2CFE89E7AD0424A070D434A6F6DC49520ED.wps"
 /* This string is set to an error message, if one occurs */
 CHAR ALTERA_ErrorString[1024];
 typedef struct
@@ -796,14 +796,14 @@ WDC_DEVICE_HANDLE initialize_PCI( DWORD VENDOR_ID, DWORD DEVICE_ID) {
     if (WD_STATUS_SUCCESS != dwStatus)
     {
         printf("Fail to initiate driver library.\n");
-        return 3;
+//        return 3;
     }
 
     dwStatus = WDC_PciScanDevices(VENDOR_ID, DEVICE_ID, &scanResult);
     if (WD_STATUS_SUCCESS != dwStatus)
     {
         WDC_Err("hu: Failed to scan the PCI driver. Error 0x%lx - %s\n", dwStatus, Stat2Str(dwStatus));
-        return 1;
+      //  return 1;
     }
     //dwNumDevices = scanResult.dwNumDevices;//## 搜索到的设备个数
     deviceInfo.pciSlot = scanResult.deviceSlot[0];//scanResult.dwNumDevices  - 1
@@ -958,49 +958,54 @@ WORD init_rp_mem(DWORD *rp_buffer_virt_addr, DWORD num_dword) {
 }
 
 struct altera_pcie_dma_bookkeep *InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA ** ppDma, WD_DMA ** ppDMA_rd_buf) {
-    struct altera_pcie_dma_bookkeep *bk_ptr;
-    //bk_ptr = (struct altera_pcie_dma_bookkeep *)malloc(sizeof(struct altera_pcie_dma_bookkeep));
-   // BZERO(*bk_ptr);
-    DWORD * ppbuf ;
-    ppbuf = malloc(sizeof(BYTE) * 512);
-    DWORD status = WDC_DMAContigBufLock(hDev, ppbuf, DMA_TO_DEVICE, 512, ppDma);
+    //struct altera_pcie_dma_bookkeep *bk_ptr = NULL;
+    printf("altera_pcie_dma_bookkeep size is %d.\n", sizeof(struct altera_pcie_dma_bookkeep));
+   
+    struct altera_pcie_dma_bookkeep *bk_ptr = (struct altera_pcie_dma_bookkeep *) malloc(sizeof(struct altera_pcie_dma_bookkeep));
+    struct altera_pcie_dma_bookkeep *bk_ptr1 = (struct altera_pcie_dma_bookkeep *) malloc(sizeof(struct altera_pcie_dma_bookkeep));
+    BZERO(bk_ptr);
+    PVOID * ppbuf ;
+    ppbuf = malloc(sizeof(BYTE) * 1024);
+    DWORD status = WDC_DMASGBufLock(hDev, bk_ptr1, DMA_TO_DEVICE, sizeof(struct altera_pcie_dma_bookkeep), ppDma);
     if (status != WD_STATUS_SUCCESS) {
         printf("Fail to initiate DMAContigBuf.\n");
     }
 
-    bk_ptr = (struct altera_pcie_dma_bookkeep *) (*ppDma)->pUserAddr;
+  // bk_ptr = (struct altera_pcie_dma_bookkeep *) (*ppDma)->pUserAddr;
 
     status = WDC_DMASyncCpu(*ppDma);
     if (WD_STATUS_SUCCESS != status) {
         printf("Fail to CPUSync ppDMA.\n");
     }
-    BZERO(*bk_ptr);
-    bk_ptr->dma_status.altera_dma_num_dwords = ALTERA_DMA_NUM_DWORDS;
-    bk_ptr->dma_status.altera_dma_descriptor_num = 4;
-    bk_ptr->dma_status.run_write = 1;
-    bk_ptr->dma_status.run_read = 1;
-    bk_ptr->dma_status.run_simul = 1;
-    bk_ptr->dma_status.offset = 0;
-    bk_ptr->dma_status.onchip = 1;
-    bk_ptr->dma_status.rand = 0;
+ 
+    bk_ptr1->dma_status.altera_dma_num_dwords = ALTERA_DMA_NUM_DWORDS;
+    bk_ptr1->dma_status.altera_dma_descriptor_num = 4;
+    bk_ptr1->dma_status.run_write = 1;
+    bk_ptr1->dma_status.run_read = 1;
+    bk_ptr1->dma_status.run_simul = 1;
+    bk_ptr1->dma_status.offset = 0;
+    bk_ptr1->dma_status.onchip = 1;
+    bk_ptr1->dma_status.rand = 0;
+   // bk_ptr->lite_table_rd_cpu_virt_addr->header.flags[0] = 0x0;
 
     //set_lite_table_header(bk_ptr->lite_table_rd_cpu_virt_addr->header);
     // How to set PAGE_SIZE
-    bk_ptr->numpages = (PAGE_SIZE >= MAX_NUM_DWORDS * 4) ? 1 : (int)((MAX_NUM_DWORDS * 4) / PAGE_SIZE);
+    bk_ptr1->numpages = (PAGE_SIZE >= MAX_NUM_DWORDS * 4) ? 1 : (int)((MAX_NUM_DWORDS * 4) / PAGE_SIZE);
     // Set descriptor table address
     //??? descriptor table applied in DMALock ???
     //bk_ptr->lite_table_rd_cpu_virt_addr = (struct lite_dma_desc_table *)malloc(sizeof(struct lite_dma_desc_table));
     //bk_ptr->lite_table_wr_cpu_virt_addr = (struct lite_dma_desc_table *)malloc(sizeof(struct lite_dma_desc_table));
     //bk_ptr->lite_table_rd_cpu_virt_addr->header.flags[0] = 0x0;
-    set_lite_table_header((struct lite_dma_header *)bk_ptr->lite_table_rd_cpu_virt_addr);
-    set_lite_table_header((struct lite_dma_header *)bk_ptr->lite_table_wr_cpu_virt_addr);
+    set_lite_table_header(&(bk_ptr1->lite_table_rd_cpu_virt_addr.header));
+    set_lite_table_header(&(bk_ptr1->lite_table_wr_cpu_virt_addr.header));
 
    // bk_ptr->lite_table_rd_bus_addr = (DWORD)bk_ptr->lite_table_rd_cpu_virt_addr;
     //bk_ptr->lite_table_wr_bus_addr = (DWORD)bk_ptr->lite_table_wr_cpu_virt_addr;
-    bk_ptr->lite_table_rd_bus_addr = (*ppDma)->Page->pPhysicalAddr;
+    bk_ptr1->lite_table_rd_bus_addr = (*ppDma)->Page[0].pPhysicalAddr;
 
     // Apply space for rd buffer
-    DWORD *rp_rd_buffer = NULL;
+    DWORD *rp_rd_buffer;
+    rp_rd_buffer = malloc(512);
     status = WDC_DMAContigBufLock(hDev, rp_rd_buffer, DMA_TO_DEVICE, 512, ppDMA_rd_buf);
     if (!status) {
         printf("Fail to initiate DMAContigBuf for rd_buf.\n");
@@ -1009,13 +1014,13 @@ struct altera_pcie_dma_bookkeep *InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA 
     if (!status) {
         printf("Fail to CPUSync ppDMA.\n");
     }
-    bk_ptr->rp_rd_buffer_bus_addr = (*ppDMA_rd_buf)->Page->pPhysicalAddr;
+   // bk_ptr->rp_rd_buffer_bus_addr = (*ppDMA_rd_buf)->Page->pPhysicalAddr;
 
 
    // BOOL status = ALTERA_DMALock(hDev, rp_rd_buffer, PAGE_SIZE * bk_ptr->numpages,FALSE, pDma);
 
-    (bk_ptr->rp_rd_buffer_virt_addr) = (*ppDMA_rd_buf)->pUserAddr;
-    init_rp_mem(bk_ptr->rp_rd_buffer_virt_addr,512);
+    (bk_ptr1->rp_rd_buffer_virt_addr) = (*ppDMA_rd_buf)->pUserAddr;
+    init_rp_mem(bk_ptr1->rp_rd_buffer_virt_addr,512);
 
 
     /*
@@ -1029,7 +1034,7 @@ struct altera_pcie_dma_bookkeep *InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA 
     bk_ptr->rp_wr_buffer_virt_addr = pDMA->pPhysicalAddr;
     bk_ptr->rp_wr_buffer_bus_addr = pDMA->pPhysicalAddr;
     */
-    return bk_ptr;
+    return bk_ptr1;
 
 }
 
@@ -1096,7 +1101,7 @@ BOOL ALTERA_DMABlock(WDC_DEVICE_HANDLE hDev, ALTERA_HANDLE hALTERA, BOOL fromDev
     DWORD DmaPhysicalAddr_h = ((DWORD)(ppDMA_rd_buf)->pUserAddr >> 32) & 0xffffffff;
     DWORD DmaPhysicalAddr_l = (DWORD)(ppDMA_rd_buf)->pUserAddr & 0xffffffff;
     for (int i = 0; i < 128; i++) {
-        SetDesc(&bk_ptr->lite_table_rd_cpu_virt_addr->descriptors[i],DmaPhysicalAddr_h, DmaPhysicalAddr_l, DDR_MEM_BASE_ADDR_HI, DDR_MEM_BASE_ADDR_LOW, bk_ptr->dma_status.altera_dma_num_dwords, i);
+        SetDesc(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[i]),DmaPhysicalAddr_h, DmaPhysicalAddr_l, DDR_MEM_BASE_ADDR_HI, DDR_MEM_BASE_ADDR_LOW, bk_ptr->dma_status.altera_dma_num_dwords, i);
     }
     if (!fromDev) {
 
@@ -1127,7 +1132,7 @@ BOOL ALTERA_DMABlock(WDC_DEVICE_HANDLE hDev, ALTERA_HANDLE hALTERA, BOOL fromDev
         printf("Last_id is %d.\n", last_id);
         timeout = TIMEOUT;
         while (1) {
-            if (bk_ptr->lite_table_rd_cpu_virt_addr->header.flags[last_id]) {
+            if (bk_ptr->lite_table_rd_cpu_virt_addr.header.flags[last_id]) {
                 break;
             }
             timeout--;
