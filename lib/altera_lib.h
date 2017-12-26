@@ -180,32 +180,14 @@ struct altera_pcie_dma_bookkeep {
     struct lite_dma_desc_table lite_table_rd_cpu_virt_addr;
     struct lite_dma_desc_table lite_table_wr_cpu_virt_addr;
     // The start address of lite_dms_desc_table
-    DWORD lite_table_rd_bus_addr;
-    DWORD lite_table_wr_bus_addr;
+    DMA_ADDR lite_table_rd_bus_addr;
+    DMA_ADDR lite_table_wr_bus_addr;
 
     WORD numpages;
-    DWORD *rp_rd_buffer_virt_addr;
-    DWORD rp_rd_buffer_bus_addr;
-    DWORD *rp_wr_buffer_virt_addr;
-    DWORD rp_wr_buffer_bus_addr;
-
-    ALTERA_ADDR addr_space;
-    struct dma_status dma_status;
-
-};
-
-struct altera_pcie_dma_bookkeep1 {
-    struct lite_dma_desc_table *lite_table_rd_cpu_virt_addr;
-    struct lite_dma_desc_table *lite_table_wr_cpu_virt_addr;
-    // The start address of lite_dms_desc_table
-    DWORD lite_table_rd_bus_addr;
-    DWORD lite_table_wr_bus_addr;
-
-    WORD numpages;
-    DWORD *rp_rd_buffer_virt_addr;
-    DWORD rp_rd_buffer_bus_addr;
-    DWORD *rp_wr_buffer_virt_addr;
-   DWORD rp_wr_buffer_bus_addr;
+    DMA_ADDR *rp_rd_buffer_virt_addr;
+    DMA_ADDR rp_rd_buffer_bus_addr;
+    DMA_ADDR *rp_wr_buffer_virt_addr;
+    DMA_ADDR rp_wr_buffer_bus_addr;
 
     ALTERA_ADDR addr_space;
     struct dma_status dma_status;
