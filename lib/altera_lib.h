@@ -28,7 +28,7 @@ extern "C" {
 
 //------------------------- Altera DMA parameters ------------------------------------------
 #define ALTERA_DMA_BAR_NUM (6)
-#define ALTERA_DMA_DESCRIPTOR_NUM 128
+#define ALTERA_DMA_DESCRIPTOR_NUM 4
 
 #define ALTERA_DMA_WR_DMA_CTRL          0x0000
 #define ALTERA_DMA_WR_DESC_STATUS       0x0004
@@ -83,7 +83,7 @@ extern "C" {
 #define PAGE_SIZE (0x01 << 12) //4K
 #define MAX_NUM_DWORDS 1024
 
-#define TIMEOUT 0x2000000
+#define TIMEOUT 0xf000000
 
 /* Internal data structures */
 
@@ -238,7 +238,7 @@ WORD init_rp_mem(DWORD *rp_buffer_virt_addr, DWORD num_dword);
 static int set_lite_table_header(struct lite_dma_header *header);
 
 //BOOL SetDMADescController(ALTERA_HANDLE phAltera, struct dma_descriptor *dma_desc_table_ptr, BOOL fromDev);
-BOOL SetDMADescController(ALTERA_HANDLE phAltera, DMA_ADDR desc_table_start_addr, BOOL fromDev);
+BOOL SetDMADescController(WDC_DEVICE_HANDLE hDev, DMA_ADDR desc_table_start_addr, BOOL fromDev);
 BOOL SetDesc(struct dma_descriptor *dma_desc, DWORD source_addr_high, DWORD source_addr_low, DWORD dest_addr_high, DWORD dest_addr_low, DWORD ctl_dma_len, WORD id);
 BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, DWORD dwVendorID, DWORD dwDeviceID);
 
