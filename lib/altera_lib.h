@@ -28,7 +28,7 @@ extern "C" {
 
 //------------------------- Altera DMA parameters ------------------------------------------
 #define ALTERA_DMA_BAR_NUM (6)
-#define ALTERA_DMA_DESCRIPTOR_NUM 4
+#define ALTERA_DMA_DESCRIPTOR_NUM 2
 
 #define ALTERA_DMA_WR_DMA_CTRL          0x0000
 #define ALTERA_DMA_WR_DESC_STATUS       0x0004
@@ -65,7 +65,7 @@ extern "C" {
 #define ALTERA_EPLAST_DIFF              1
 
 //#define ALTERA_DMA_NUM_DWORDS           512
-#define ALTERA_DMA_NUM_DWORDS           4096
+#define ALTERA_DMA_NUM_DWORDS           256
 
 // On-chip 4KB FIFO 0x0000_0000_0800_0000 - 0x0000_0000_0800_ffff
 #define ONCHIP_MEM_BASE_ADDR_HI         0x00000000
@@ -200,7 +200,7 @@ BOOL PCI_Get_WD_handle(HANDLE *phWD);
 WDC_DEVICE_HANDLE initialize_PCI(DWORD VENDOR_ID, DWORD DEVICE_ID);
 WDC_DEVICE_HANDLE PCI_DRIVER_DeviceOpen(const WD_PCI_CARD_INFO *pDeviceInfo);
 
-struct altera_pcie_dma_bookkeep *InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDMA_rd_buf, WD_DMA **ppDMA_wr_buf);
+DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDMA_rd_buf, WD_DMA **ppDMA_wr_buf);
 
 static inline BOOL IsValidDevice(PWDC_DEVICE pDev, const CHAR *sFunc);
 static BOOL DeviceValidate(const PWDC_DEVICE pDev);
