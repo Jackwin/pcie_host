@@ -200,7 +200,7 @@ BOOL PCI_Get_WD_handle(HANDLE *phWD);
 WDC_DEVICE_HANDLE initialize_PCI(DWORD VENDOR_ID, DWORD DEVICE_ID);
 WDC_DEVICE_HANDLE PCI_DRIVER_DeviceOpen(const WD_PCI_CARD_INFO *pDeviceInfo);
 
-DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDMA_rd_buf, WD_DMA **ppDMA_wr_buf);
+DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr,WD_DMA **ppDMA_rd_buf, WD_DMA **ppDMA_wr_buf);
 
 static inline BOOL IsValidDevice(PWDC_DEVICE pDev, const CHAR *sFunc);
 static BOOL DeviceValidate(const PWDC_DEVICE pDev);

@@ -940,7 +940,7 @@ WORD init_rp_mem(DWORD *rp_buffer_virt_addr, DWORD num_dword) {
     return 1;
 }
 
-DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDMA_rd_buf, WD_DMA **ppDMA_wr_buf) {
+DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr, WD_DMA **ppDMA_rd_buf, WD_DMA **ppDMA_wr_buf) {
     //struct altera_pcie_dma_bookkeep *bk_ptr = NULL;
     printf("altera_pcie_dma_bookkeep size is %d.\n", sizeof(struct altera_pcie_dma_bookkeep));
     bk_ptr1 = (struct altera_pcie_dma_bookkeep *) malloc(sizeof(struct altera_pcie_dma_bookkeep));
@@ -956,6 +956,20 @@ DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDMA_rd_
     status = WDC_DMASyncCpu(*ppDma);
     if (WD_STATUS_SUCCESS != status) {
         printf("Fail to CPUSync ppDMA.\n");
+    }
+
+    //BZERO(bk_ptr);
+    status = WDC_DMASGBufLock(hDev, &(bk_ptr1->lite_table_wr_cpu_virt_addr), DMA_TO_DEVICE, sizeof(struct altera_pcie_dma_bookkeep), ppDma_wr);
+    // Because of the size of structure altera_pcie_dma_bookkeep is over than 4KB page size, it needs to use ContigBufLock to apply space for altera_pcie_dma_bookkeep
+    // DWORD status = WDC_DMAContigBufLock(hDev, bk_ptr1, DMA_TO_DEVICE, sizeof(struct altera_pcie_dma_bookkeep), ppDma);
+    if (status != WD_STATUS_SUCCESS) {
+        printf("Fail to initiate DMAContigBuf for ppDma_wr.\n");
+    }
+    printf("DMA page number in wr is %d.\n", (*ppDma_wr)->dwPages);
+
+    status = WDC_DMASyncCpu(*ppDma_wr);
+    if (WD_STATUS_SUCCESS != status) {
+        printf("Fail to CPUSync ppDMA_wr.\n");
     }
 
     bk_ptr1->dma_status.altera_dma_num_dwords = ALTERA_DMA_NUM_DWORDS;
@@ -974,6 +988,7 @@ DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDMA_rd_
     set_lite_table_header(&(bk_ptr1->lite_table_wr_cpu_virt_addr.header));
 
     bk_ptr1->lite_table_rd_bus_addr = (*ppDma)->Page[0].pPhysicalAddr;
+    bk_ptr1->lite_table_wr_bus_addr = (*ppDma_wr)->Page[0].pPhysicalAddr;
 
     // DMA read operation, moving data from host to Device. Apply space for rd buffer
     rp_rd_buffer = (DWORD *)malloc(RP_RD_BUFFER_SZIE);
@@ -1048,10 +1063,10 @@ BOOL ALTERA_DMABlock(WDC_DEVICE_HANDLE hDev, ALTERA_HANDLE hALTERA, BOOL fromDev
     //struct altera_pcie_dma_bookkeep *bk_ptr1;
     DWORD last_id, write_127 = 0;
     DWORD timeout;
-    WD_DMA *ppDMA = NULL, *ppDMA_rd_buf= NULL, *ppDMA_wr_buf=NULL;
+    WD_DMA *ppDMA = NULL, *ppDMA_wr = NULL, *ppDMA_rd_buf= NULL, *ppDMA_wr_buf=NULL;
     PVOID pBuf = NULL;
     //pDMA = (WD_DMA *)(malloc(sizeof(WD_DMA)));
-    status = InitDMABookkeep(hDev, &ppDMA, &ppDMA_rd_buf, &ppDMA_wr_buf);
+    status = InitDMABookkeep(hDev, &ppDMA, &ppDMA_wr,  &ppDMA_rd_buf, &ppDMA_wr_buf);
     if (status != WD_STATUS_SUCCESS) {
         printf("Fail to initiate DMA bookkeep.\n");
     }
@@ -1077,6 +1092,7 @@ BOOL ALTERA_DMABlock(WDC_DEVICE_HANDLE hDev, ALTERA_HANDLE hALTERA, BOOL fromDev
         }
         if (write_127)
             WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, (ALTERA_DMA_DESCRIPTOR_NUM - 1));
+        SetDMADescController(hDev, bk_ptr1->lite_table_rd_bus_addr, fromDev);
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, last_id);
         printf("Last_id is %d.\n", last_id);
         timeout = TIMEOUT;
@@ -1094,6 +1110,8 @@ BOOL ALTERA_DMABlock(WDC_DEVICE_HANDLE hDev, ALTERA_HANDLE hALTERA, BOOL fromDev
 
         WDC_DMASyncIo(ppDMA);
         WDC_DMABufUnlock(ppDMA);
+        WDC_DMASyncIo(ppDMA_wr);
+        WDC_DMABufUnlock(ppDMA_wr);
         WDC_DMASyncIo(ppDMA_rd_buf);
         WDC_DMABufUnlock(ppDMA_rd_buf);
         WDC_DMASyncIo(ppDMA_wr_buf);
@@ -1126,6 +1144,7 @@ BOOL ALTERA_DMABlock(WDC_DEVICE_HANDLE hDev, ALTERA_HANDLE hALTERA, BOOL fromDev
         }
         if (write_127)
             WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_LAST_PTR, (ALTERA_DMA_DESCRIPTOR_NUM - 1));
+        SetDMADescController(hDev, bk_ptr1->lite_table_wr_bus_addr, fromDev);
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_LAST_PTR, last_id);
         printf("Last_id is %d.\n", last_id);
         timeout = TIMEOUT;
@@ -1143,6 +1162,8 @@ BOOL ALTERA_DMABlock(WDC_DEVICE_HANDLE hDev, ALTERA_HANDLE hALTERA, BOOL fromDev
 
         WDC_DMASyncIo(ppDMA);
         WDC_DMABufUnlock(ppDMA);
+        WDC_DMASyncIo(ppDMA_wr);
+        WDC_DMABufUnlock(ppDMA_wr);
         WDC_DMASyncIo(ppDMA_rd_buf);
         WDC_DMABufUnlock(ppDMA_rd_buf);
         WDC_DMASyncIo(ppDMA_wr_buf);

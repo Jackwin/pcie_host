@@ -61,7 +61,7 @@ int main() {
 
     
   
-     DWORD status = ALTERA_DMABlock(hDev,hALTERA,FALSE);
+     DWORD status = ALTERA_DMABlock(hDev,hALTERA,TRUE);
      if (!status) {
          printf("Fail to Read Altera Device.\n");
          return 0;
