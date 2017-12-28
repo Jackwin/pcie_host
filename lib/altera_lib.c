@@ -951,7 +951,7 @@ DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDMA_rd_
     if (status != WD_STATUS_SUCCESS) {
         printf("Fail to initiate DMAContigBuf.\n");
     }
-    printf("DMA page number is %d.\n", *ppDMA->dwPages);
+    printf("DMA page number is %d.\n", (*ppDma)->dwPages);
 
     status = WDC_DMASyncCpu(*ppDma);
     if (WD_STATUS_SUCCESS != status) {
@@ -959,7 +959,7 @@ DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDMA_rd_
     }
 
     bk_ptr1->dma_status.altera_dma_num_dwords = ALTERA_DMA_NUM_DWORDS;
-    bk_ptr1->dma_status.altera_dma_descriptor_num = 4;
+    bk_ptr1->dma_status.altera_dma_descriptor_num = ALTERA_DMA_DESCRIPTOR_NUM;
     bk_ptr1->dma_status.run_write = 1;
     bk_ptr1->dma_status.run_read = 1;
     bk_ptr1->dma_status.run_simul = 1;
@@ -1044,14 +1044,14 @@ BOOL DMAOpen (WDC_DEVICE_HANDLE hDev, PVOID *ppBuf, DWORD dwDMABufSize, BOOL fTo
 // DMA READ -> Move data from CPU to FPGA
 BOOL ALTERA_DMABlock(WDC_DEVICE_HANDLE hDev, ALTERA_HANDLE hALTERA, BOOL fromDev) {
 
-    BOOL status = FALSE;
-    struct altera_pcie_dma_bookkeep *bk_ptr1;
+    BOOL status;
+    //struct altera_pcie_dma_bookkeep *bk_ptr1;
     DWORD last_id, write_127 = 0;
     DWORD timeout;
-    WD_DMA *ppDMA = NULL, *ppDMA_rd_buf= NULL, **ppDMA_wr_buf;
+    WD_DMA *ppDMA = NULL, *ppDMA_rd_buf= NULL, *ppDMA_wr_buf=NULL;
     PVOID pBuf = NULL;
     //pDMA = (WD_DMA *)(malloc(sizeof(WD_DMA)));
-    DWORD status = InitDMABookkeep(hDev, &ppDMA, &ppDMA_rd_buf, &ppDMA_wr_buf);
+    status = InitDMABookkeep(hDev, &ppDMA, &ppDMA_rd_buf, &ppDMA_wr_buf);
     if (status != WD_STATUS_SUCCESS) {
         printf("Fail to initiate DMA bookkeep.\n");
     }
