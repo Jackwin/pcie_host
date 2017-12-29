@@ -47,20 +47,6 @@ int main() {
 
     hDev = initialize_PCI(VENDOR_ID, DEVICE_ID);
 
-    
-/*
-    BOOL status = ALTERA_Open(&phALTERA, card.vendor_id, card.device_id, card.num - 1);
-    if (!status) {
-        printf("Fail to open Altera Device.\n");
-        return 0;
-    }
-*/
-
-
-   // BOOL status = DeviceFindAndOpen(&hALTERA,card.vendor_id, card.device_id);
-
-    
-  
      DWORD status = ALTERA_DMABlock(hDev,hALTERA,TRUE);
      if (!status) {
          printf("Fail to Read Altera Device.\n");
@@ -82,22 +68,22 @@ int main() {
      double totaltime;
      start = clock();
      ALTERA_ReadWriteBlock(hALTERA, AD_PCI_BAR4, 0x10000, 0, pbuf, dwBytes, ALTERA_MODE_DWORD);
-     
+
      for (long loop = 0; loop < 10000000; loop++)
          result = 3.63 * 5.27; ;
-     
+
      for (int i = 0; i < 100; i++) {
          ALTERA_ReadWriteBlock(hALTERA, AD_PCI_BAR4, 0x00 + 0x1000*i, 0, pbuf, dwBytes, ALTERA_MODE_DWORD);
      }
-     
-    
- 
+
+
+
      for (int j = 0; j < 100; j++)
         for (int i = 0; i < 256; i++) {
              rdbuf[i] = ALTERA_ReadDword(hALTERA, AD_PCI_BAR4, i * 4);
          }
-   
-  
+
+
     // system("pause");
      //time(&finish);
      finish = clock();

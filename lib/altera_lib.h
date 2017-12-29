@@ -20,6 +20,7 @@
 #include "samples/shared/pci_regs.h"
 #include "wdc_defs.h"
 #include "wdc_lib.h"
+#include "pci_driver_lib.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -194,11 +195,19 @@ struct altera_pcie_dma_bookkeep {
 
 };
 
+// DMA buffer for storing user data
+typedef struct
+{
+    DWORD dwpages;
+    DMA_ADDR phy_addr;
+    DWORD *pdata;
+}DMA_BUFFER;
 
 //------------------------------------------------------------------------------------------------
 BOOL PCI_Get_WD_handle(HANDLE *phWD);
-WDC_DEVICE_HANDLE initialize_PCI(DWORD VENDOR_ID, DWORD DEVICE_ID);
+DWORD initialize_PCI(DWORD VENDOR_ID, DWORD DEVICE_ID);
 WDC_DEVICE_HANDLE PCI_DRIVER_DeviceOpen(const WD_PCI_CARD_INFO *pDeviceInfo);
+BOOL PCI_DRIVER_DeviceClose (WDC_DEVICE_HANDLE hDev);
 
 DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr,WD_DMA **ppDMA_rd_buf, WD_DMA **ppDMA_wr_buf);
 
@@ -239,7 +248,7 @@ static int set_lite_table_header(struct lite_dma_header *header);
 
 //BOOL SetDMADescController(ALTERA_HANDLE phAltera, struct dma_descriptor *dma_desc_table_ptr, BOOL fromDev);
 BOOL SetDMADescController(WDC_DEVICE_HANDLE hDev, DMA_ADDR desc_table_start_addr, BOOL fromDev);
-BOOL SetDesc(struct dma_descriptor *dma_desc, DWORD source_addr_high, DWORD source_addr_low, DWORD dest_addr_high, DWORD dest_addr_low, DWORD ctl_dma_len, WORD id);
+BOOL SetDescTable(struct dma_descriptor *dma_desc, DWORD source_addr_high, DWORD source_addr_low, DWORD dest_addr_high, DWORD dest_addr_low, DWORD ctl_dma_len, WORD id);
 BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, DWORD dwVendorID, DWORD dwDeviceID);
 
 BOOL ALTERA_DMABlock(WDC_DEVICE_HANDLE hDev, ALTERA_HANDLE hALTERA, BOOL fromDev);
