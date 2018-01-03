@@ -208,19 +208,12 @@ BOOL PCI_Get_WD_handle(HANDLE *phWD);
 DWORD initialize_PCI(DWORD VENDOR_ID, DWORD DEVICE_ID);
 WDC_DEVICE_HANDLE PCI_DRIVER_DeviceOpen(const WD_PCI_CARD_INFO *pDeviceInfo);
 BOOL PCI_DRIVER_DeviceClose (WDC_DEVICE_HANDLE hDev);
-
 DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr,WD_DMA **ppDMA_rd_buf, WD_DMA **ppDMA_wr_buf);
-
-static inline BOOL IsValidDevice(PWDC_DEVICE pDev, const CHAR *sFunc);
-static BOOL DeviceValidate(const PWDC_DEVICE pDev);
-
 typedef void (DLLCALLCONV *ALTERA_INT_HANDLER)( ALTERA_HANDLE hALTERA, ALTERA_INT_RESULT *intResult);
-
 BOOL ALTERA_Open (ALTERA_HANDLE *phALTERA, DWORD dwVendorID, DWORD dwDeviceID, DWORD nCardNum);
 void ALTERA_Close(ALTERA_HANDLE hALTERA);
 DWORD ALTERA_CountCards (DWORD dwVendorID, DWORD dwDeviceID);
 BOOL ALTERA_IsAddrSpaceActive(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace);
-
 void ALTERA_GetPciSlot(ALTERA_HANDLE hALTERA, WD_PCI_SLOT *pPciSlot);
 
 // General read/write function
@@ -250,10 +243,9 @@ static int set_lite_table_header(struct lite_dma_header *header);
 BOOL SetDMADescController(WDC_DEVICE_HANDLE hDev, DMA_ADDR desc_table_start_addr, BOOL fromDev);
 BOOL SetDescTable(struct dma_descriptor *dma_desc, DWORD source_addr_high, DWORD source_addr_low, DWORD dest_addr_high, DWORD dest_addr_low, DWORD ctl_dma_len, WORD id);
 BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, DWORD dwVendorID, DWORD dwDeviceID);
-
-BOOL ALTERA_DMABlock(WDC_DEVICE_HANDLE hDev, ALTERA_HANDLE hALTERA, BOOL fromDev);
+BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev, DWORD vendor_id, DWORD device_id);
+DWORD ApplyPhysicalAddress(WD_DMA *pDMA, BOOL bfrom_dev, DMA_BUFFER *DMA_buf);
 BOOL ALTERA_ContinueDMALock(ALTERA_HANDLE hALTERA, PVOID pBuffer, DWORD dwBytes, BOOL fFromDev, WD_DMA *pDma);
-BOOL DMAOpen (WDC_DEVICE_HANDLE hDev, PVOID *ppBuf, DWORD dwDMABufSize, BOOL fToDev, WD_DMA **ppDMA);
 // this string is set to an error message, if one occurs
 extern CHAR ALTERA_ErrorString[];
 

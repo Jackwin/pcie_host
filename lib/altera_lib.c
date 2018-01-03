@@ -8,6 +8,7 @@
  */
 
 #include "altera_lib.h"
+#include "pci_driver_lib.h"
 #include "windrvr_int_thread.h"
 #include "status_strings.h"
 #include <stdio.h>
@@ -44,6 +45,8 @@ typedef struct ALTERA_STRUCT
     ALTERA_ADDR_DESC addrDesc[ALTERA_ITEMS];
     WD_CARD_REGISTER cardReg;
 } ALTERA_STRUCT;
+
+WDC_DEVICE_HANDLE hDev;
 
 struct altera_pcie_dma_bookkeep *bk_ptr1;
 DWORD *rp_rd_buffer;
@@ -670,140 +673,13 @@ BOOL ALTERA_DMAReadWriteBlock(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr,
     return fOk;
 }
 //---------------------------- Usr Application -------------------------------------------------------
-
-static CHAR gsPCI_DRIVER_LastErr[256];
-static DWORD LibInit_count = 0;
-
-static inline BOOL IsValidDevice(PWDC_DEVICE pDev, const CHAR *sFunc)
-{
-    if (!pDev || !WDC_GetDevContext(pDev))
-    {
-        snprintf(gsPCI_DRIVER_LastErr, sizeof(gsPCI_DRIVER_LastErr) - 1, "%s: NULL device %s\n",
-            sFunc, !pDev ? "handle" : "context");
-        //printf(gsPCI_DRIVER_LastErr);
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static BOOL DeviceValidate(const PWDC_DEVICE pDev)
-{
-    DWORD i, dwNumAddrSpaces = pDev->dwNumAddrSpaces;
-
-    /* TODO: You can modify the implementation of this function in order to
-    verify that the device has all expected resources. */
-
-    /* Verify that the device has at least one active address space */
-    for (i = 0; i < dwNumAddrSpaces; i++)
-    {
-        if (WDC_AddrSpaceIsActive(pDev, i))
-            return TRUE;
-    }
-
-    printf("Device does not have any active memory or I/O address spaces\n");
-    return TRUE;
-}
-/*
-WDC_DEVICE_HANDLE PCI_DRIVER_DeviceOpen( const WD_PCI_CARD_INFO *pDeviceInfo)
-{
-    WDC_DEVICE_HANDLE hDev;
-    DWORD dwStatus;
-    WDC_DEVICE * pDevCtx = NULL;
-    //WDC_DEVICE_HANDLE hDev = NULL;
-
-
-    if (!pDeviceInfo)
-    {
-        printf("PCI_DRIVER_DeviceOpen: Error - NULL device information struct pointer\n");
-        return NULL;
-    }
-
-    pDevCtx = malloc(sizeof(WDC_DEVICE));
-
-    dwStatus = WDC_PciDeviceOpen(&hDev, pDeviceInfo, pDevCtx, NULL, NULL, NULL);
-
-    if (WD_STATUS_SUCCESS != dwStatus)
-    {
-        WDC_Err("Failed opening a WDC device handle. Error 0x%lx - %s\n",  dwStatus, Stat2Str(dwStatus));
-        goto Error;
-    }
-
-    if (!DeviceValidate((PWDC_DEVICE)hDev))
-        goto Error;
-
-
-    printf("PCI_DRIVER_DeviceOpen: Opened a PCI_DRIVER device (handle 0x%p)\n", hDev);
-    return hDev;
-
-Error:
-    PCI_DRIVER_DeviceClose(hDev);
-
-    return NULL;
-}
-
-
-BOOL PCI_DRIVER_DeviceClose (WDC_DEVICE_HANDLE hDev) {
-    DWORD dwstatus;
-    if (!hDev) {
-        ErrLog("PCI_DRIVER_DeviceClose: Error - NULL device handle\n");
-        return FALSE;
-    }
-    dwStatus = WDC_PciDeviceClose(hDev);
-    if (WD_STATUS_SUCCESS != dwStatus) {
-        ErrLog("Failed closing a WDC device handle (0x%p). Error 0x%lx - %s\n",
-            hDev, dwStatus, Stat2Str(dwStatus));
-    }
-    return (WD_STATUS_SUCCESS == dwstatus)
-}
-
-DWORD PCI_DRIVER_LibInit(void)
-{
-    DWORD dwStatus;
-
-
-    if (++LibInit_count > 1)
-        return WD_STATUS_SUCCESS;
-
-#if defined(WD_DRIVER_NAME_CHANGE)
-
-    if (!WD_DriverName(PCI_DRIVER_DEFAULT_DRIVER_NAME))
-    {
-        printf("Failed to set the driver name for WDC library.\n");
-        return WD_SYSTEM_INTERNAL_ERROR;
-    }
-#endif
-
-
-    dwStatus = WDC_SetDebugOptions(WDC_DBG_DEFAULT, NULL);
-    if (WD_STATUS_SUCCESS != dwStatus)
-    {
-        printf("Failed to initialize debug options for WDC library.\n"
-            "Error 0x%lx - %s\n", dwStatus, Stat2Str(dwStatus));
-
-        return dwStatus;
-    }
-
-
-    dwStatus = WDC_DriverOpen(WDC_DRV_OPEN_DEFAULT, PCI_DRIVER_DEFAULT_LICENSE_STRING);
-    if (WD_STATUS_SUCCESS != dwStatus)
-    {
-        printf("Failed to initialize the WDC library. Error 0x%lx - %s\n",
-            dwStatus, Stat2Str(dwStatus));
-
-        return dwStatus;
-    }
-
-    return WD_STATUS_SUCCESS;
-}
-*/
 /*
 Return: 0 -- Success
         1 -- Fail to initialize driver library
         2 -- Fail to scan the PCI driver
         3 -- Can not find the PCI handle
 */
-DWORD initialize_PCI(WDC_DEVICE_HANDLE hDev, DWORD VENDOR_ID, DWORD DEVICE_ID) {
+DWORD initialize_PCI(DWORD VENDOR_ID, DWORD DEVICE_ID) {
     WDC_PCI_SCAN_RESULT scanResult;
     WD_PCI_CARD_INFO    deviceInfo;
     DWORD  dwStatus = PCI_DRIVER_LibInit();
@@ -824,7 +700,7 @@ DWORD initialize_PCI(WDC_DEVICE_HANDLE hDev, DWORD VENDOR_ID, DWORD DEVICE_ID) {
 
     hDev = PCI_DRIVER_DeviceOpen(&deviceInfo);
     if (hDev == NULL) {
-        WDC_Err("hu: Failed to find the handle to the PCI driver.\n")
+        WDC_Err("hu: Failed to find the handle to the PCI driver.\n");
         return 3;
     }
     return 0;
@@ -836,7 +712,7 @@ Return: 0 -- Success
         2 -- Fail to uninitialize the PCI driver library
 */
 DWORD close_pci (WDC_DEVICE_HANDLE hDev) {
-    TraceLog("Start to close PCI...\n");
+   // TraceLog("Start to close PCI...\n");
 
     DWORD dwStatus, i = 0;
     dwStatus = PCI_DRIVER_DeviceClose(hDev);
@@ -845,12 +721,12 @@ DWORD close_pci (WDC_DEVICE_HANDLE hDev) {
         i++;
     }
 
-    dwStatus = PCI_DRIVER_LibUnint();
+    dwStatus = PCI_DRIVER_LibUninit();
     if (WD_STATUS_SUCCESS != dwStatus) {
         WDC_Err("Failed to uninitialize the PCI driver library. Error 0x%lx - %s\n",dwStatus, Stat2Str(dwStatus));
         i++;
     }
-    TraceLog("Success to close the PCI driver.\n");
+   // TraceLog("Success to close the PCI driver.\n");
     return i;
 }
 
@@ -909,6 +785,7 @@ BOOL DeviceFindAndOpen(ALTERA_HANDLE *phAltera, DWORD dwVendorID, DWORD dwDevice
     return TRUE;
 }
 
+// Set descriptor table
 BOOL SetDescTable(struct dma_descriptor *dma_desc, DWORD source_addr_high, DWORD source_addr_low, DWORD dest_addr_high, DWORD dest_addr_low, DWORD ctl_dma_len, WORD id) {
     dma_desc->src_addr_low = source_addr_low;
     dma_desc->src_addr_high = source_addr_high;
@@ -954,6 +831,7 @@ BOOL SetDMADescController(WDC_DEVICE_HANDLE hDev, DMA_ADDR desc_table_start_addr
 
 }
 
+// Initialize the descriptor table header
 static int set_lite_table_header(struct lite_dma_header *header) {
     int i;
     for (i = 0; i < 128; i++)
@@ -974,31 +852,30 @@ WORD init_rp_mem(DWORD *rp_buffer_virt_addr, DWORD num_dword) {
     return 1;
 }
 
-
 // Func:Apply for the physical address
 // 1)dwDMA_buf_size: the buffer size in byte
 // 2)bfrom_dev: 1->DEVICE_FROM_DEVICE, 0 -> DEVICE_TO_DEVICE
 // 3)bSGbuf: 1->SG buffer 0->Continuous buffer
-DWORD ApplyPhysicalAddress (WDC_DEVICE_HANDLE hDev, WD_DMA *pDMA,, BOOL bfrom_dev, DMA_BUFFER *DMA_buf) {
-    TraceLog("Apply physical address for buffers.\n");
+DWORD ApplyPhysicalAddress (WD_DMA *pDMA, BOOL bfrom_dev, DMA_BUFFER *DMA_buf) {
+   // TraceLog("Apply physical address for buffers.\n");
     DWORD dwstatus;
     if (bfrom_dev) {
-        dwstatus = WDC_DMAContigBufLock(hDev, DMA_buf->pdata, DMA_FROM_DEVICE, DMA_buf->dwpages * PAGE_SIZE, &ppDMA);
+        dwstatus = WDC_DMAContigBufLock(hDev, DMA_buf->pdata, DMA_FROM_DEVICE, DMA_buf->dwpages * PAGE_SIZE, &pDMA);
     }
     else {
-        dwstatus = WDC_DMAContigBufLock(hDev, DMA_buf->pdata, DMA_TO_DEVICE, DMA_buf->dwpages * PAGE_SIZE, &ppDMA);
+        dwstatus = WDC_DMAContigBufLock(hDev, DMA_buf->pdata, DMA_TO_DEVICE, DMA_buf->dwpages * PAGE_SIZE, &pDMA);
     }
     if (WD_STATUS_SUCCESS != dwstatus) {
         WDC_Err("Failed to apply physical addr. Error 0x%lx - %s\n", dwstatus, Stat2Str(dwstatus));
         return 1;
     }
 
-    DMA_buf->phy_addr = ppDMA->Page[0].physicalAddr;
-    DMA_buf->pdata = ppDMA->pUserAddr;
+    DMA_buf->phy_addr = pDMA->Page[0].pPhysicalAddr;
+    DMA_buf->pdata = pDMA->pUserAddr;
     dwstatus = WDC_DMASyncCpu(pDMA);
     if (WD_STATUS_SUCCESS != dwstatus) {
         WDC_Err("Failed to sync to the cache of CPU with the physical address. Error 0x%lx - %s\n", dwstatus, Stat2Str(dwstatus));
-        return 2
+        return 2;
     }
     return 0;
 }
@@ -1020,15 +897,12 @@ DWORD FreePhysicalAddress(WD_DMA *pDMA) {
         WDC_Err("Failed to free the physical address. Error 0x%lx - %s\n", dwstatus, Stat2Str(dwstatus));
         return 2;
     }
-
     return 0;
 }
 
 DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr,  WD_DMA **ppDMA_rd_buf, WD_DMA **ppDMA_wr_buf) {
-    //struct altera_pcie_dma_bookkeep *bk_ptr = NULL;
     printf("altera_pcie_dma_bookkeep size is %d.\n", sizeof(struct altera_pcie_dma_bookkeep));
     bk_ptr1 = (struct altera_pcie_dma_bookkeep *) malloc(sizeof(struct altera_pcie_dma_bookkeep));
-    //BZERO(bk_ptr);
     DWORD status = WDC_DMASGBufLock(hDev, bk_ptr1, DMA_TO_DEVICE, sizeof(struct altera_pcie_dma_bookkeep), ppDma);
     // Because of the size of structure altera_pcie_dma_bookkeep is over than 4KB page size, it needs to use ContigBufLock to apply space for altera_pcie_dma_bookkeep
     // DWORD status = WDC_DMAContigBufLock(hDev, bk_ptr1, DMA_TO_DEVICE, sizeof(struct altera_pcie_dma_bookkeep), ppDma);
@@ -1041,8 +915,6 @@ DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr,
     if (WD_STATUS_SUCCESS != status) {
         printf("Fail to CPUSync ppDMA.\n");
     }
-
-    //BZERO(bk_ptr);
     status = WDC_DMASGBufLock(hDev, &(bk_ptr1->lite_table_wr_cpu_virt_addr), DMA_TO_DEVICE, sizeof(struct altera_pcie_dma_bookkeep), ppDma_wr);
     // Because of the size of structure altera_pcie_dma_bookkeep is over than 4KB page size, it needs to use ContigBufLock to apply space for altera_pcie_dma_bookkeep
     // DWORD status = WDC_DMAContigBufLock(hDev, bk_ptr1, DMA_TO_DEVICE, sizeof(struct altera_pcie_dma_bookkeep), ppDma);
@@ -1064,8 +936,6 @@ DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr,
     bk_ptr1->dma_status.offset = 0;
     bk_ptr1->dma_status.onchip = 1;
     bk_ptr1->dma_status.rand = 0;
-
-    // How to set PAGE_SIZE
     bk_ptr1->numpages = (PAGE_SIZE >= MAX_NUM_DWORDS * 4) ? 1 : (int)((MAX_NUM_DWORDS * 4) / PAGE_SIZE);
 
     set_lite_table_header(&(bk_ptr1->lite_table_rd_cpu_virt_addr.header));
@@ -1101,10 +971,7 @@ DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr,
     (bk_ptr1->rp_rd_buffer_bus_addr) = (*ppDMA_rd_buf)->Page[0].pPhysicalAddr;
     (bk_ptr1->rp_wr_buffer_virt_addr) = (*ppDMA_wr_buf)->pUserAddr;
     (bk_ptr1->rp_wr_buffer_bus_addr) = (*ppDMA_wr_buf)->Page[0].pPhysicalAddr;
-    //free(bk_ptr1);
-   // free(rp_rd_buffer);
     return status;
-
 }
 
 WORD init_ep_mem(ALTERA_HANDLE hALTERA, DWORD mem_byte_offset, DWORD num_dwords, BYTE increment) {
@@ -1123,33 +990,25 @@ WORD init_ep_mem(ALTERA_HANDLE hALTERA, DWORD mem_byte_offset, DWORD num_dwords,
 
     return 1;
 }
-/* DMAOpen: Locks a Scatter/Gather DMA buffer */
-BOOL DMAOpen (WDC_DEVICE_HANDLE hDev, PVOID *ppBuf, DWORD dwDMABufSize, BOOL fToDev, WD_DMA **ppDMA) {
 
-    DWORD dwStatus;
-    DWORD dwOptions = fToDev ? DMA_TO_DEVICE : DMA_FROM_DEVICE;
-    /* Lock a Scatter/Gather DMA buffer */
-    dwStatus = WDC_DMASGBufLock(hDev, ppBuf, dwOptions, dwDMABufSize, ppDMA);
-    if (WD_STATUS_SUCCESS != dwStatus)
-    {
-        printf("Failed locking a Scatter/Gather DMA buffer. Error 0x%lx - %s\n",
-               dwStatus, Stat2Str(dwStatus));
-        return FALSE;
-    }
-    /* Program the device's DMA registers for each physical page */
-//    MyDMAProgram((*ppDma)->Page, (*ppDma)->dwPages, fToDev);
-    return TRUE;
-}
 // DMA READ -> Move data from CPU to FPGA
-BOOL ALTERA_DMABlock(WDC_DEVICE_HANDLE hDev, ALTERA_HANDLE hALTERA, BOOL fromDev) {
-
-    BOOL status;
-    //struct altera_pcie_dma_bookkeep *bk_ptr1;
+BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev, DWORD vendor_id, DWORD device_id) {
+    // make sure WinDriver is loaded
+    if (!PCI_Get_WD_handle(&hDev)) {
+        printf("Fail to get WD_handle.\n");
+        return 0;
+    }
+    WD_Close(hDev);
+    DWORD status;
+    status = initialize_PCI(vendor_id, device_id);
+    if (status != WD_STATUS_SUCCESS) {
+        printf("Fail to initialize PCI.\n");
+    }
+ 
     DWORD last_id, write_127 = 0;
     DWORD timeout;
     WD_DMA *ppDMA = NULL, *ppDMA_wr = NULL, *ppDMA_rd_buf= NULL, *ppDMA_wr_buf=NULL;
     PVOID pBuf = NULL;
-    //pDMA = (WD_DMA *)(malloc(sizeof(WD_DMA)));
     status = InitDMABookkeep(hDev, &ppDMA, &ppDMA_wr,  &ppDMA_rd_buf, &ppDMA_wr_buf);
     if (status != WD_STATUS_SUCCESS) {
         printf("Fail to initiate DMA bookkeep.\n");
@@ -1203,11 +1062,10 @@ BOOL ALTERA_DMABlock(WDC_DEVICE_HANDLE hDev, ALTERA_HANDLE hALTERA, BOOL fromDev
         free(rp_rd_buffer);
         free(ep_wr_buffer);
         free(bk_ptr1);
+        close_pci(hDev);
         return TRUE;
     }
-
     else {
-
         DWORD wr_buf_phy_addr_h = (bk_ptr1->rp_wr_buffer_bus_addr >> 32) & 0xffffffff;
         DWORD wr_buf_phy_addr_l = bk_ptr1->rp_wr_buffer_bus_addr & 0xffffffff;
         for (int i = 0; i < ALTERA_DMA_DESCRIPTOR_NUM; i++) {
@@ -1243,7 +1101,6 @@ BOOL ALTERA_DMABlock(WDC_DEVICE_HANDLE hDev, ALTERA_HANDLE hALTERA, BOOL fromDev
                 break;
             }
         }
-
         WDC_DMASyncIo(ppDMA);
         WDC_DMABufUnlock(ppDMA);
         WDC_DMASyncIo(ppDMA_wr);
@@ -1255,6 +1112,8 @@ BOOL ALTERA_DMABlock(WDC_DEVICE_HANDLE hDev, ALTERA_HANDLE hALTERA, BOOL fromDev
         free(rp_rd_buffer);
         free(ep_wr_buffer);
         free(bk_ptr1);
+        //WDC_PciDeviceClose(hDev);
+        close_pci(hDev);
         return TRUE;
     }
     return TRUE;

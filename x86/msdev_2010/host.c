@@ -41,19 +41,14 @@ int main() {
    // printf("%d Altera cards found.\n", card_num);
     printf("ALTERA diagnostic utility.\n");
     printf("Application accesses hardware using " WD_PROD_NAME ".\n");
-    // make sure WinDriver is loaded
-    if (!PCI_Get_WD_handle(&hDev)) return 0;
-    WD_Close(hDev);
-
-    hDev = initialize_PCI(VENDOR_ID, DEVICE_ID);
-
-     DWORD status = ALTERA_DMABlock(hDev,hALTERA,TRUE);
+  
+     DWORD status = ALTERA_DMABlock(hALTERA,FALSE, VENDOR_ID, DEVICE_ID);
      if (!status) {
          printf("Fail to Read Altera Device.\n");
          return 0;
 
      }
-     WDC_PciDeviceClose(hDev);
+     //WDC_PciDeviceClose(hDev);
      /*
      DWORD *pbuf, *prdbuf;
      pbuf = (DWORD*)(malloc(sizeof(DWORD) * 256));
