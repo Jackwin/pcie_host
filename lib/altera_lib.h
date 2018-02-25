@@ -29,7 +29,7 @@ extern "C" {
 
 //------------------------- Altera DMA parameters ------------------------------------------
 #define ALTERA_DMA_BAR_NUM (6)
-#define ALTERA_DMA_DESCRIPTOR_NUM 2
+#define ALTERA_DMA_DESCRIPTOR_NUM 16
 
 #define ALTERA_DMA_WR_DMA_CTRL          0x0000
 #define ALTERA_DMA_WR_DESC_STATUS       0x0004
