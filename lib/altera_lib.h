@@ -29,7 +29,7 @@ extern "C" {
 
 //------------------------- Altera DMA parameters ------------------------------------------
 #define ALTERA_DMA_BAR_NUM (6)
-#define ALTERA_DMA_DESCRIPTOR_NUM 16
+#define ALTERA_DMA_DESCRIPTOR_NUM 126
 
 #define ALTERA_DMA_WR_DMA_CTRL          0x0000
 #define ALTERA_DMA_WR_DESC_STATUS       0x0004
@@ -138,11 +138,6 @@ struct dma_status {
     struct timeval write_time;
     struct timeval read_time;
     struct timeval simul_time;
-    char pass_read;
-    char pass_write;
-    char pass_simul;
-    char read_eplast_timeout;
-    char write_eplast_timeout;
     int offset;
     char onchip;
     char rand;
@@ -191,7 +186,7 @@ struct altera_pcie_dma_bookkeep {
     DMA_ADDR rp_wr_buffer_bus_addr;
 
     ALTERA_ADDR addr_space;
-    struct dma_status dma_status;
+  //  struct dma_status dma_status;
 
 };
 

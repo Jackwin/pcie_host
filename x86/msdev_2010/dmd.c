@@ -77,7 +77,8 @@ void init_fast_dma_pat_data(void) {
 
     for (int i = 1; i < (1920 * 1080 / 256); i++) {
         for (int j = 0; j < 8; j++)
-        fast_dmd_pattern.pat_data[i].data[j] = fast_dmd_pattern.pat_data[i - 1].data[j] + 0x01010101;
+       // fast_dmd_pattern.pat_data[i].data[j] = fast_dmd_pattern.pat_data[i - 1].data[j] + 0x01010101;
+            fast_dmd_pattern.pat_data[i].data[j] = 0;
     }
 
 }
