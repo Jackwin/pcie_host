@@ -29,7 +29,7 @@ extern "C" {
 
 //------------------------- Altera DMA parameters ------------------------------------------
 #define ALTERA_DMA_BAR_NUM (6)
-#define ALTERA_DMA_DESCRIPTOR_NUM 126
+#define ALTERA_DMA_DESCRIPTOR_NUM 125
 
 #define ALTERA_DMA_WR_DMA_CTRL          0x0000
 #define ALTERA_DMA_WR_DESC_STATUS       0x0004
@@ -205,6 +205,7 @@ WDC_DEVICE_HANDLE PCI_DRIVER_DeviceOpen(const WD_PCI_CARD_INFO *pDeviceInfo);
 BOOL PCI_DRIVER_DeviceClose (WDC_DEVICE_HANDLE hDev);
 DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr,WD_DMA **ppDMA_rd_buf, WD_DMA **ppDMA_wr_buf);
 typedef void (DLLCALLCONV *ALTERA_INT_HANDLER)( ALTERA_HANDLE hALTERA, ALTERA_INT_RESULT *intResult);
+/*
 BOOL ALTERA_Open (ALTERA_HANDLE *phALTERA, DWORD dwVendorID, DWORD dwDeviceID, DWORD nCardNum);
 void ALTERA_Close(ALTERA_HANDLE hALTERA);
 DWORD ALTERA_CountCards (DWORD dwVendorID, DWORD dwDeviceID);
@@ -212,6 +213,7 @@ BOOL ALTERA_IsAddrSpaceActive(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace);
 void ALTERA_GetPciSlot(ALTERA_HANDLE hALTERA, WD_PCI_SLOT *pPciSlot);
 
 // General read/write function
+
 void ALTERA_ReadWriteBlock(ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, DWORD dwOffset, BOOL fRead, PVOID buf, DWORD dwBytes, ALTERA_MODE mode);
 BYTE ALTERA_ReadByte (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, DWORD dwOffset);
 WORD ALTERA_ReadWord (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, DWORD dwOffset);
@@ -219,28 +221,30 @@ UINT32 ALTERA_ReadDword (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, DWORD dwO
 void ALTERA_WriteByte (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, DWORD dwOffset, BYTE data);
 void ALTERA_WriteWord (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, DWORD dwOffset, WORD data);
 void ALTERA_WriteDword (ALTERA_HANDLE hALTERA, ALTERA_ADDR addrSpace, DWORD dwOffset, UINT32 data);
+
 // handle interrupts
 BOOL ALTERA_IntIsEnabled (ALTERA_HANDLE hALTERA);
 BOOL ALTERA_IntEnable (ALTERA_HANDLE hALTERA, ALTERA_INT_HANDLER funcIntHandler);
 void ALTERA_IntDisable (ALTERA_HANDLE hALTERA);
+*/
 // access to PCI configuration registers
-void ALTERA_WritePCIReg(ALTERA_HANDLE hALTERA, DWORD dwReg, UINT32 dwData);
-UINT32 ALTERA_ReadPCIReg(ALTERA_HANDLE hALTERA, DWORD dwReg);
+//void ALTERA_WritePCIReg(ALTERA_HANDLE hALTERA, DWORD dwReg, UINT32 dwData);
+//UINT32 ALTERA_ReadPCIReg(ALTERA_HANDLE hALTERA, DWORD dwReg);
 
 // Function for performing Scatter/Gather DMA
-BOOL ALTERA_DMAReadWriteBlock(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr, PVOID pBuffer, BOOL fRead, DWORD dwBytes, BOOL fChained);
+//BOOL ALTERA_DMAReadWriteBlock(ALTERA_HANDLE hALTERA, DWORD dwLocalAddr, PVOID pBuffer, BOOL fRead, DWORD dwBytes, BOOL fChained);
 
-WORD init_ep_mem(ALTERA_HANDLE hALTERA, DWORD mem_byte_offset, DWORD num_dwords, BYTE increment);
+//WORD init_ep_mem(ALTERA_HANDLE hALTERA, DWORD mem_byte_offset, DWORD num_dwords, BYTE increment);
 WORD init_rp_mem(DWORD *rp_buffer_virt_addr, DWORD num_dword);
 static int set_lite_table_header(struct lite_dma_header *header);
 
 //BOOL SetDMADescController(ALTERA_HANDLE phAltera, struct dma_descriptor *dma_desc_table_ptr, BOOL fromDev);
-BOOL SetDMADescController(WDC_DEVICE_HANDLE hDev, DMA_ADDR desc_table_start_addr, BOOL fromDev);
+BOOL ConfigDMADescController(WDC_DEVICE_HANDLE hDev, DMA_ADDR desc_table_start_addr, BOOL fromDev);
 BOOL SetDescTable(struct dma_descriptor *dma_desc, DWORD source_addr_high, DWORD source_addr_low, DWORD dest_addr_high, DWORD dest_addr_low, DWORD ctl_dma_len, WORD id);
-BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, DWORD dwVendorID, DWORD dwDeviceID);
+//BOOL DeviceFindAndOpen(ALTERA_HANDLE * phAltera, DWORD dwVendorID, DWORD dwDeviceID);
 BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev, DWORD vendor_id, DWORD device_id);
 DWORD ApplyPhysicalAddress(WD_DMA *pDMA, BOOL bfrom_dev, DMA_BUFFER *DMA_buf);
-BOOL ALTERA_ContinueDMALock(ALTERA_HANDLE hALTERA, PVOID pBuffer, DWORD dwBytes, BOOL fFromDev, WD_DMA *pDma);
+//BOOL ALTERA_ContinueDMALock(ALTERA_HANDLE hALTERA, PVOID pBuffer, DWORD dwBytes, BOOL fFromDev, WD_DMA *pDma);
 // this string is set to an error message, if one occurs
 extern CHAR ALTERA_ErrorString[];
 
