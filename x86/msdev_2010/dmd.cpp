@@ -1,3 +1,6 @@
+#include <iostream>
+#include <fstream>
+using namespace std;
 #include "dmd.h"
 
 DMD_PATTERN_1920x1080 *dmd_pat_1920x1080_ptr;
@@ -5,6 +8,8 @@ FAST_DMD_PATTERN fast_dmd_pattern;
 
 void GenerateDMDPattern(int h_pix, int line, int pat_num, char *file_name) {
     PAT_DATA_UNIT data_unit;
+    ofstream in;
+    in.open("dmd_pat_1920x1080.txt", ios::trunc);
     int unit_num = (h_pix * line) % 256 ? (h_pix * line / 256 + 1) : (h_pix * line / 256);
     for (int i = 0; i < unit_num; i++) {
         data_unit.data[0] = i;

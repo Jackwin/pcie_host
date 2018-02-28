@@ -164,7 +164,7 @@ BOOL ConfigDMADescController(WDC_DEVICE_HANDLE hDev, DMA_ADDR desc_table_start_a
     DWORD dt_phy_addr_h = (desc_table_start_addr >> 32) & 0xffffffff;
     DWORD dt_phy_addr_l = desc_table_start_addr & 0xffffffff;
 
-    // if fromDev  is false, it is DMA read operation, movin data from CPU to FPGA
+    // Move data from CPU to FPGA
     if (!fromDev) {
         // Program the address of descriptor table to DMA descriptor controller
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_HIGH_SRC_ADDR, dt_phy_addr_h);
@@ -256,7 +256,7 @@ DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr,
     printf("altera_pcie_dma_bookkeep size is %d.\n", sizeof(struct altera_pcie_dma_bookkeep));
    // bk_ptr1 = (struct altera_pcie_dma_bookkeep *) malloc(sizeof(struct altera_pcie_dma_bookkeep));
    // DWORD status = WDC_DMASGBufLock(hDev, bk_ptr1, DMA_TO_DEVICE, sizeof(struct altera_pcie_dma_bookkeep), ppDma);
-    
+
     PVOID ppBuf;
     DWORD status = WDC_DMAContigBufLock(hDev, &ppBuf, DMA_TO_DEVICE, sizeof(struct altera_pcie_dma_bookkeep), ppDma);
     //ppBuf = (struct altera_pcie_dma_bookkeep *) malloc(sizeof(struct altera_pcie_dma_bookkeep));
@@ -287,7 +287,7 @@ DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr,
 
     //bk_ptr1->dma_status.altera_dma_num_dwords = ALTERA_DMA_NUM_DWORDS;
     //bk_ptr1->dma_status.altera_dma_descriptor_num = ALTERA_DMA_DESCRIPTOR_NUM;
- 
+
     bk_ptr1->numpages = (PAGE_SIZE >= MAX_NUM_DWORDS * 4) ? 1 : (int)((MAX_NUM_DWORDS * 4) / PAGE_SIZE);
 
     set_lite_table_header(&(bk_ptr1->lite_table_rd_cpu_virt_addr.header));
@@ -365,7 +365,7 @@ BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev, DWORD vendor_id, DWORD
     if (status != WD_STATUS_SUCCESS) {
         printf("Fail to initialize PCI.\n");
     }
- 
+
     DWORD last_id, write_127 = 0;
     DWORD timeout;
     WD_DMA *ppDMA = NULL, *ppDMA_wr = NULL, *ppDMA_rd_buf= NULL, *ppDMA_wr_buf=NULL;
@@ -383,7 +383,6 @@ BOOL ALTERA_DMABlock(ALTERA_HANDLE hALTERA, BOOL fromDev, DWORD vendor_id, DWORD
             SetDescTable(&(bk_ptr1->lite_table_rd_cpu_virt_addr.descriptors[i]), rd_buf_phy_addr_h, rd_buf_phy_addr_l, ONCHIP_MEM_BASE_ADDR_HI, ONCHIP_MEM_BASE_ADDR_LOW, bk_ptr1->dma_status.altera_dma_num_dwords, i);
             }
         */
-
         DMA_ADDR onchip_mem_base_addr = (ONCHIP_MEM_BASE_ADDR_HI << 32) + ONCHIP_MEM_BASE_ADDR_LOW;
         DMA_ADDR onchip_mem_start_addr;
         DWORD current_page_size, pre_page_size;
