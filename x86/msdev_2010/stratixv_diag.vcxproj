@@ -114,13 +114,15 @@
   <ItemGroup>
     <ClCompile Include="..\..\lib\altera_lib.c" />
     <ClCompile Include="..\..\lib\pci_driver_lib.c" />
-    <ClCompile Include="dmd.c" />
+    <ClCompile Include="dma.c" />
     <ClCompile Include="host.c" />
+    <ClCompile Include="pattern.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\lib\altera_lib.h" />
     <ClInclude Include="..\..\lib\pci_driver_lib.h" />
-    <ClInclude Include="dmd.h" />
+    <ClInclude Include="dma.h" />
+    <ClInclude Include="pattern.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
