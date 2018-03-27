@@ -50,6 +50,6 @@ int main() {
      }
      */
 
-    DMAOperation(1, "model","txt", 1920, 1080, 0, VENDOR_ID, DEVICE_ID);
+    DMAOperation(2, "model","txt", 1920, 1080, 0, VENDOR_ID, DEVICE_ID);
      
 }

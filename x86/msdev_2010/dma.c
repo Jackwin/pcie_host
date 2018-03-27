@@ -145,7 +145,7 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
     long des_addr = 0;
     int dma_dt_cnt = 0;
 
-    DWORD last_id, write_127 = 0;
+    DWORD last_id = 0, write_127 = 0;
     DWORD timeout;
     WD_DMA *ppDMA = NULL, *ppDMA_wr = NULL, *ppDMA_rd_buf = NULL, *ppDMA_wr_buf = NULL;
     PVOID pBuf = NULL;
@@ -167,8 +167,6 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
     if (status != WD_STATUS_SUCCESS) {
         printf("Fail to initialize PCI.\n");
     }
-
-
     //CPU memory address
     //DWORD rd_buf_phy_addr_h = (bk_ptr->rp_rd_buffer_bus_addr >> 32) & 0xffffffff;
    // DWORD rd_buf_phy_addr_l = bk_ptr->rp_rd_buffer_bus_addr & 0xffffffff;
@@ -183,7 +181,7 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
             char pattern_name[30];
             strcpy(pattern_name, prefix);
             char num[6];
-            itoa(pattern_num, num, 10);
+            itoa(k, num, 10);
             strcat(pattern_name, num);
             printf("pattern name is %s.\n", pattern_name);
             strcat(pattern_name, ".");
@@ -192,6 +190,7 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
             FILE *fp = OpenPattern(pattern_name, "r");
             // The maximum number of DMA DT is 128, starting from 0 to 127
             int pattern_size = CalcualtePatternSize(fp);
+            printf("pattern_size is %d.\n", pattern_size);
             CloseFile(fp);
             // One page corresponds to one DMA Descriptor Table
             int page_num = (pattern_size % PAGE_SIZE == 0) ? (pattern_size / PAGE_SIZE) : (pattern_size / PAGE_SIZE + 1);
@@ -210,45 +209,56 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
                 printf("Oversize of DMA Descriptor number.\n");
                 break;
             }
-            for (int i = 0; i < ppDMA_rd_buf->dwPages; i++) {
-                (bk_ptr->rp_rd_buffer_bus_addr) = ppDMA_rd_buf->Page[i].pPhysicalAddr;  // Buffer's physical address
+            WDC_ReadAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, &last_id);
+            printf("Before DT, last_id is %x.\n", last_id);
+            if (last_id == 0xff)
+                last_id = 0;
+            else
+                last_id = last_id + 1;
+           // for (int i = 0; i < ppDMA_rd_buf->dwPages; i++) {
+              //  (bk_ptr->rp_rd_buffer_bus_addr) = ppDMA_rd_buf->Page[i].pPhysicalAddr;  // Buffer's physical address
                 DWORD rd_buf_phy_addr_h = (bk_ptr->rp_rd_buffer_bus_addr >> 32) & 0xffffffff;
                 DWORD rd_buf_phy_addr_l = bk_ptr->rp_rd_buffer_bus_addr & 0xffffffff;
 
-                if (i == 0) {
-                    if (k == 0) {  // The first 256-bit data in the first pattern stores in the onchip_mem_base_addr
-                        onchip_mem_start_addr = onchip_mem_base_addr;
-                        pre_page_size = 0;
-                    }
-                    else {
-                        onchip_mem_start_addr = onchip_mem_start_addr + ((pre_page_size % 32 == 0) ? (pre_page_size / 32) : (pre_page_size / 32 + 1));
-                        pre_page_size = current_page_size;
-                    }
+              //  if (i == 0) {
+                if (k == 0) {  // The first 256-bit data in the first pattern stores in the onchip_mem_base_addr
+                    onchip_mem_start_addr = onchip_mem_base_addr;
+                   // pre_page_size = 0;
+                    current_page_size = ppDMA_rd_buf->Page[0].dwBytes;
+                    printf("current_page_size is %d.\n", current_page_size);
+                    printf("onchip_mem_start_addr is %x.\n", onchip_mem_start_addr);
+                }
+                else {  
+                    
+                   // int addr_inc = ((pre_page_size % 32 == 0) ? (pre_page_size / 32) : (pre_page_size / 32 + 1));
+                    onchip_mem_start_addr = onchip_mem_start_addr + pre_page_size;
+                    printf("onchip_mem_start_addr is %x.\n", onchip_mem_start_addr);
                     current_page_size = ppDMA_rd_buf->Page[0].dwBytes;
                 }
-                else {
-                    current_page_size = ppDMA_rd_buf->Page[i].dwBytes;
-                    pre_page_size = ppDMA_rd_buf->Page[i - 1].dwBytes;
-                    onchip_mem_start_addr = onchip_mem_start_addr + ((pre_page_size % 32 == 0) ? (pre_page_size / 32) : (pre_page_size / 32 + 1));
-                }
+                pre_page_size = current_page_size;
+               // current_page_size = ppDMA_rd_buf->Page[0].dwBytes;
+               // }
+               // else {
+               //     current_page_size = ppDMA_rd_buf->Page[i].dwBytes;
+               //     pre_page_size = ppDMA_rd_buf->Page[i - 1].dwBytes;
+               //     onchip_mem_start_addr = onchip_mem_start_addr + ((pre_page_size % 32 == 0) ? (pre_page_size / 32) : (pre_page_size / 32 + 1));
+              //  }
 
                 DWORD onchip_mem_addr_h = (onchip_mem_start_addr >> 32) & 0xffffffff;
                 DWORD onchip_mem_addr_l = onchip_mem_start_addr & 0xffffffff;
                 DWORD dma_dword = (current_page_size) / 4; // Dword number
-                SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[i+3]), rd_buf_phy_addr_h, rd_buf_phy_addr_l, onchip_mem_addr_h, onchip_mem_addr_l, dma_dword, (i+3));
-            }
+                SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[last_id]), rd_buf_phy_addr_h, rd_buf_phy_addr_l, onchip_mem_addr_h, onchip_mem_addr_l, dma_dword, last_id);
+              //  printf("DT table is %d.\n",(i + last_id));
+          //  }
 
             WDC_ReadAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, &last_id);
-
+            printf("After DT, last_id is %x.\n", last_id);
             if (last_id == 0xff) {
                 //ConfigDMADescController(hDev, bk_ptr->lite_table_rd_bus_addr, fromDev);
                 WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTRL_HIGH_DEST_ADDR, RD_CTRL_BUF_BASE_LOW);
                 WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTLR_LOW_DEST_ADDR, RD_CTRL_BUF_BASE_LOW);
                 last_id = 127;
-                //last_id = ppDMA_rd_buf->dwPages - 1;
             }
-           // else
-              //  last_id = ppDMA_rd_buf->dwPages - 1 + 3;
             last_id = last_id + ppDMA_rd_buf->dwPages;
 
             if (last_id > 127) {
@@ -275,16 +285,14 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
                     break;
                 }
             }
-
-            WDC_DMASyncIo(ppDMA);
-            WDC_DMABufUnlock(ppDMA);
-            WDC_DMASyncIo(ppDMA_rd_buf);
-            WDC_DMABufUnlock(ppDMA_rd_buf);
             //WDC_DMASyncIo(ppDMA_wr_buf);
            // WDC_DMABufUnlock(ppDMA_wr_buf);
-            close_pci(hDev);
-            return TRUE;
-
         }
+        WDC_DMASyncIo(ppDMA);
+        WDC_DMABufUnlock(ppDMA);
+        WDC_DMASyncIo(ppDMA_rd_buf);
+        WDC_DMABufUnlock(ppDMA_rd_buf);
+        close_pci(hDev);
+        return TRUE;
     }
 }
