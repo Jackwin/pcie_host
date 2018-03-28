@@ -49,7 +49,7 @@ int main() {
          return 0;
      }
      */
-
-    DMAOperation(2, "model","txt", 1920, 1080, 0, VENDOR_ID, DEVICE_ID);
+    DMAOperation(3, "model_480x270_","txt", 480, 270, 0, VENDOR_ID, DEVICE_ID);
+//    PatternFill("model1_480x270.txt", 480, 270);
      
 }

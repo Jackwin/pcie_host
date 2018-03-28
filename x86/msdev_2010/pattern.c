@@ -282,18 +282,18 @@ char Hex2Char(int data) {
 // The maximum fill size is (64-1)
 void PatternFill(char pattern_name[], int h_pix, int v_line) {
     // The memory space to store one line 1920 pixels. 1920/32
-    int h_fill_size = HORIZONTAL_PIXEL / h_pix - 1;
-    int v_fill_size = VERTICAL_LINE / v_line - 1;
-
+    int h_fill_size = HORIZONTAL_PIXEL / h_pix;
+    int v_fill_size = VERTICAL_LINE / v_line ;
+    int v_line_tmp = v_line;
     int bit_cnt_per_line = 0;
     int duplicate = HORIZONTAL_PIXEL / h_pix;
-
-    for (int j = 0; j < v_line; j++) {
+   // DMD_PATTERN *dmd_pattern_ptr1 = (DMD_PATTERN *)malloc(sizeof(DMD_PATTERN));
+    for (int j = 0; j < v_line_tmp; j++) {
         // For every line, set 0 for every bit
         for (int i = 0; i < 60; i++) {
             one_line_pix_array[i] = 0;
         }
-        for (int n = 0; n < VERTICAL_LINE / v_line; n++){
+        for (int n = 0; n < 4; n++){
             bit_cnt_per_line = 0;
             if (n == 0) {
                 for (int i = 0; i < h_pix / 4; i++) {
@@ -303,39 +303,42 @@ void PatternFill(char pattern_name[], int h_pix, int v_line) {
                         int bit = GetBit(hex, 3 - k); // Get the bit from the most-left to right
                         if (bit == 1) {
                             // Duplicate the bit
-                            for (int m = 0; m < HORIZONTAL_PIXEL / h_pix; m++) {
+                            for (int m = 0; m < h_fill_size; m++) {
                                 one_line_pix_array[bit_cnt_per_line / 32] = SetBit(one_line_pix_array[bit_cnt_per_line / 32], (31 - ((i * 4 + k) * duplicate + m)));
                                 bit_cnt_per_line++;
                             }
                         }
                         else {
                             // The bit is default 0. No need to fill 0
-                            bit_cnt_per_line = bit_cnt_per_line + HORIZONTAL_PIXEL / h_pix;
+                            bit_cnt_per_line = bit_cnt_per_line + h_fill_size;
                         }
                     }
-                    int line_offset = j * (VERTICAL_LINE / v_line) + 0;  // The line offset in 1080 lines
+                    int line_offset = j * v_fill_size + 0;  // The line offset in 1080 lines
                    // In one line, 1920 bits equal to 60 int-types (32-bit)
                    // for (int h = 0; h < HORIZONTAL_PIXEL / 32; h++) {
                         // Assign one line pix int-array to one pattern memory
                   //      dmd_pttern_data.pattern_data[(line_offset * 60 + h) / 8].data[(line_offset * 60 + h) % 8] = one_line_pix_array[h];
                   //  }
                 }
-                if (j == 1) {
-                    for (int mm = 0; mm < 60; mm++)
-                        printf("one_line_pix_array[%d] is %x.\n ", mm, one_line_pix_array[mm]);
+                for (int h = 0; h < 60; h++) {
+                    // Assign one line pix int-array to one pattern memory
+                    dmd_pattern_ptr->data[h] = one_line_pix_array[h];
+                    //dmd_pttern_data.pattern_data[(line_offset * 60 + h) / 8].data[(line_offset * 60 + h) % 8] = one_line_pix_array[h];
                 }
             }
             // Just copy the last line data
             else {
-                int line_offset = j * (VERTICAL_LINE / v_line) + n;  // The offset line in 1080 lines
+                int line_offset = j * v_fill_size + n;  // The offset line in 1080 lines
                 // In one line, 1920 bits equal to 60 int-types (32-bit)
-               // for (int h = 0; h < 60; h++) {
+                for (int h = 0; h < 60; h++) {
                     // Assign one line pix int-array to one pattern memory
-                //    dmd_pttern_data.pattern_data[(line_offset * 60 + h) / 8].data[(line_offset * 60 + h) % 8] = one_line_pix_array[h];
-              //  }
+                    dmd_pattern_ptr->data[line_offset * 60 + h] = one_line_pix_array[h];
+                    //dmd_pttern_data.pattern_data[(line_offset * 60 + h) / 8].data[(line_offset * 60 + h) % 8] = one_line_pix_array[h];
+                }
             }
         }
-   }
+   }  
+    printf("dmd_pattern_ptr->data[64799] is %x.\n",dmd_pattern_ptr->data[64799]);
 }
 
 // The maximum duplication number is 31

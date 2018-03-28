@@ -176,7 +176,6 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
         if (status != WD_STATUS_SUCCESS) {
             printf("Fail to initiate DMA bookkeep.\n");
         }
-
         for (int k = 0; k < pattern_num; k++) {
             char pattern_name[30];
             strcpy(pattern_name, prefix);
@@ -194,14 +193,21 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
             CloseFile(fp);
             // One page corresponds to one DMA Descriptor Table
             int page_num = (pattern_size % PAGE_SIZE == 0) ? (pattern_size / PAGE_SIZE) : (pattern_size / PAGE_SIZE + 1);
-            int int_num_per_line = h_pix / 32;  // The number of Int in every line
-            int hex_num_per_line = h_pix / 4;
+            if (h_pix == 1080) {
+                int int_num_per_line = h_pix / 32;  // The number of Int in every line
+                int hex_num_per_line = h_pix / 4;
 
-            for (int line_index = 0; line_index < v_line; line_index++) {
-                for (int j = 0; j < int_num_per_line; j++) {
-                    //(int_num_per_line + 2) means there are 2 '\n' at every end of line
-                    dmd_pattern_ptr->data[line_index * int_num_per_line + j] = ReadDMDPattern(pattern_name, (line_index * (hex_num_per_line + 2) + j * 8), 8);
+                for (int line_index = 0; line_index < v_line; line_index++) {
+                    for (int j = 0; j < int_num_per_line; j++) {
+                        //(int_num_per_line + 2) means there are 2 '\n' at every end of line
+                        dmd_pattern_ptr->data[line_index * int_num_per_line + j] = ReadDMDPattern(pattern_name, (line_index * (hex_num_per_line + 2) + j * 8), 8);
+                    }
                 }
+            }
+            else {
+                int int_num_per_line = h_pix / 32;  // The number of Int in every line
+                int hex_num_per_line = h_pix / 4;
+                PatternFill(pattern_name, h_pix, v_line);
             }
 
             //  Construct the descriptor table
@@ -236,20 +242,11 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
                     current_page_size = ppDMA_rd_buf->Page[0].dwBytes;
                 }
                 pre_page_size = current_page_size;
-               // current_page_size = ppDMA_rd_buf->Page[0].dwBytes;
-               // }
-               // else {
-               //     current_page_size = ppDMA_rd_buf->Page[i].dwBytes;
-               //     pre_page_size = ppDMA_rd_buf->Page[i - 1].dwBytes;
-               //     onchip_mem_start_addr = onchip_mem_start_addr + ((pre_page_size % 32 == 0) ? (pre_page_size / 32) : (pre_page_size / 32 + 1));
-              //  }
-
+           
                 DWORD onchip_mem_addr_h = (onchip_mem_start_addr >> 32) & 0xffffffff;
                 DWORD onchip_mem_addr_l = onchip_mem_start_addr & 0xffffffff;
                 DWORD dma_dword = (current_page_size) / 4; // Dword number
                 SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[last_id]), rd_buf_phy_addr_h, rd_buf_phy_addr_l, onchip_mem_addr_h, onchip_mem_addr_l, dma_dword, last_id);
-              //  printf("DT table is %d.\n",(i + last_id));
-          //  }
 
             WDC_ReadAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, &last_id);
             printf("After DT, last_id is %x.\n", last_id);

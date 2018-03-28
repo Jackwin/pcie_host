@@ -5,8 +5,8 @@
 #include <string.h>
 #include <stdbool.h>
 
-#define HORIZONTAL_PIXEL (16 * 4 *4)
-#define VERTICAL_LINE  (1)
+#define HORIZONTAL_PIXEL (1920)
+#define VERTICAL_LINE  (1080)
 
 //std::string mode1_name = "model1.txt";
 #define PAGE_SIZE_HEX (4096 * 2)    //hex
