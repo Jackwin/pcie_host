@@ -32,9 +32,11 @@ BOOL ConfigDMADescController(WDC_DEVICE_HANDLE hDev, DMA_ADDR desc_table_start_a
         // Program the address of descriptor table to DMA descriptor controller
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_HIGH_SRC_ADDR, dt_phy_addr_h);
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_LOW_SRC_ADDR, dt_phy_addr_l);
+        WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTRL_HIGH_DEST_ADDR, RD_CTRL_BUF_BASE_LOW);
+        WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTLR_LOW_DEST_ADDR, RD_CTRL_BUF_BASE_LOW);
        // WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTRL_HIGH_DEST_ADDR, RD_CTRL_BUF_BASE_LOW);
        // WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTLR_LOW_DEST_ADDR, RD_CTRL_BUF_BASE_LOW);
-        WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_TABLE_SIZE, table_size);
+        //WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_TABLE_SIZE, table_size);
     }
     else {
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_RC_HIGH_SRC_ADDR, dt_phy_addr_h);
@@ -149,12 +151,12 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
     DWORD timeout;
     WD_DMA *ppDMA = NULL, *ppDMA_wr = NULL, *ppDMA_rd_buf = NULL, *ppDMA_wr_buf = NULL;
     PVOID pBuf = NULL;
-    DWORD status;
+    static DWORD status;
 
     // Address variables
     //DMA_ADDR onchip_mem_base_addr = (ONCHIP_MEM_BASE_ADDR_HI << 32) + ONCHIP_MEM_BASE_ADDR_LOW;
 
-    DMA_ADDR onchip_mem_base_addr = (DDR_MEM_BASE_ADDR_HI << 32) + DDR_MEM_BASE_ADDR_LOW;
+    DMA_ADDR onchip_mem_base_addr = (DDR_MEM_BASE_ADDR_HI << 32) + DDR_MEM_BASE_ADDR_LOW + 3 * 32;
     DMA_ADDR onchip_mem_start_addr;
     DWORD current_page_size, pre_page_size;
 
@@ -170,7 +172,8 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
     //CPU memory address
     //DWORD rd_buf_phy_addr_h = (bk_ptr->rp_rd_buffer_bus_addr >> 32) & 0xffffffff;
    // DWORD rd_buf_phy_addr_l = bk_ptr->rp_rd_buffer_bus_addr & 0xffffffff;
-
+  
+  
     if (!fromDev) {
         status = InitDMABookkeep(hDev, &ppDMA, &ppDMA_wr, &ppDMA_rd_buf, &ppDMA_wr_buf);
         if (status != WD_STATUS_SUCCESS) {
@@ -193,7 +196,7 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
             CloseFile(fp);
             // One page corresponds to one DMA Descriptor Table
             int page_num = (pattern_size % PAGE_SIZE == 0) ? (pattern_size / PAGE_SIZE) : (pattern_size / PAGE_SIZE + 1);
-            if (h_pix == 1080) {
+            if (h_pix == 1920) {
                 int int_num_per_line = h_pix / 32;  // The number of Int in every line
                 int hex_num_per_line = h_pix / 4;
 
@@ -232,7 +235,7 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
                    // pre_page_size = 0;
                     current_page_size = ppDMA_rd_buf->Page[0].dwBytes;
                     printf("current_page_size is %d.\n", current_page_size);
-                    printf("onchip_mem_start_addr is %x.\n", onchip_mem_start_addr);
+                    printf("onchip_mem_start_addr is 0x%x.\n", onchip_mem_start_addr);
                 }
                 else {  
                     
@@ -252,8 +255,7 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
             printf("After DT, last_id is %x.\n", last_id);
             if (last_id == 0xff) {
                 //ConfigDMADescController(hDev, bk_ptr->lite_table_rd_bus_addr, fromDev);
-                WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTRL_HIGH_DEST_ADDR, RD_CTRL_BUF_BASE_LOW);
-                WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTLR_LOW_DEST_ADDR, RD_CTRL_BUF_BASE_LOW);
+                
                 last_id = 127;
             }
             last_id = last_id + ppDMA_rd_buf->dwPages;
@@ -262,7 +264,8 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
                 last_id = last_id - 128;
                 if ((ppDMA_rd_buf->dwPages > 1) && (last_id != 127)) write_127 = 1;
             }
-            ConfigDMADescController(hDev, bk_ptr->lite_table_rd_bus_addr, 0, fromDev);
+            if (k == 0)
+                ConfigDMADescController(hDev, bk_ptr->lite_table_rd_bus_addr, (last_id + pattern_name - 1), fromDev);
             if (write_127) {
                 WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, 127);
             }
@@ -282,14 +285,23 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
                     break;
                 }
             }
-            //WDC_DMASyncIo(ppDMA_wr_buf);
-           // WDC_DMABufUnlock(ppDMA_wr_buf);
         }
         WDC_DMASyncIo(ppDMA);
         WDC_DMABufUnlock(ppDMA);
         WDC_DMASyncIo(ppDMA_rd_buf);
         WDC_DMABufUnlock(ppDMA_rd_buf);
+
+        int read_data;
+        WDC_ReadAddr32(hDev, ALTERA_AD_BAR4, 0x60, &read_data);
+        printf("Read_data from Address 0x60 is %x.\n", read_data);
+
+        // Set DDR3 Addr0
+        WDC_WriteAddr32(hDev, ALTERA_AD_BAR4, 0x00, 0);
+        WDC_WriteAddr32(hDev, ALTERA_AD_BAR4, 0x04, 0x3f480);
+
+
         close_pci(hDev);
         return TRUE;
     }
+    
 }

@@ -6,6 +6,10 @@
 #include "samples/shared/diag_lib.h"
 #include "samples/shared/wdc_diag_lib.h"
 #include "samples/shared/pci_regs.h"
+
+#include "pci_driver_lib.h"
+#include "windrvr_int_thread.h"
+
 //#include "stratixv_lib.h"
 #include "altera_lib.h"
 #include <time.h>
@@ -49,7 +53,25 @@ int main() {
          return 0;
      }
      */
-    DMAOperation(3, "model_480x270_","txt", 480, 270, 0, VENDOR_ID, DEVICE_ID);
+    DMAOperation(1, "model","txt", 1920, 1080, 0, VENDOR_ID, DEVICE_ID);
 //    PatternFill("model1_480x270.txt", 480, 270);
+    /*
+    if (!PCI_Get_WD_handle(&hDev)) {
+        printf("Fail to get WD_handle.\n");
+        return 0;
+    }
+    WD_Close(hDev);
+    int status = initialize_PCI(VENDOR_ID, DEVICE_ID);
+    if (status != WD_STATUS_SUCCESS) {
+        printf("Fail to initialize PCI.\n");
+    }
+    */
+    //int read_data;
+
+    //WDC_ReadAddr32(hDev, ALTERA_AD_BAR4, 0x60, &read_data);
+    //printf("Read_data from Address 0x60 is %x.\n", read_data);
      
+
+
+     close_pci(hDev);
 }
