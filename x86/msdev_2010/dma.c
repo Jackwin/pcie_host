@@ -293,7 +293,7 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
             DWORD onchip_mem_addr_h = (onchip_mem_start_addr >> 32) & 0xffffffff;
             DWORD onchip_mem_addr_l = onchip_mem_start_addr & 0xffffffff;
             DWORD dma_dword = (current_page_size) / 4; // Dword number
-            SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[i]), rd_buf_phy_addr_h, rd_buf_phy_addr_l, onchip_mem_addr_h, onchip_mem_addr_l, dma_dword, last_id);
+            SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[i]), rd_buf_phy_addr_h, rd_buf_phy_addr_l, onchip_mem_addr_h, onchip_mem_addr_l, dma_dword, i);
 
             }
             WDC_ReadAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, &last_id);
@@ -327,6 +327,7 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
             if (last_id > 127) {
                 last_id = last_id - 128;
                 //if ((ppDMA1_rd_buf->dwPages > 1) && (last_id != 127)) write_127 = 1;
+                if (last_id != 127) write_127 = 1;
             }
            // if (k == 0)
             //    ConfigDMADescController(hDev, bk_ptr->lite_table_rd_bus_addr, (last_id + pattern_name - 1), fromDev);
