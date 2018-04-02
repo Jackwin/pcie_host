@@ -25,6 +25,7 @@ typedef struct  {
 
 //DMD_PATTERN dmd_pattern_data;
 DMD_PATTERN *dmd_pattern_ptr;
+DMD_PATTERN dmd_pattern_data;
 
 typedef struct DMD_DESCRIPTOR {
     int pat_h_pix;  // pattern horizonal pixels
