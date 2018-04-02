@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-
+#define PATTERN_NUMBER (257)
 #define HORIZONTAL_PIXEL (1920)
 #define VERTICAL_LINE  (1080)
 
@@ -25,7 +25,8 @@ typedef struct  {
 
 //DMD_PATTERN dmd_pattern_data;
 DMD_PATTERN *dmd_pattern_ptr;
-DMD_PATTERN dmd_pattern_data;
+DMD_PATTERN dmd_pattern_data[PATTERN_NUMBER];
+//int         dmd_pattern_data[PATTERN_NUMBER * (1920 * 1080 / 32)];
 
 typedef struct DMD_DESCRIPTOR {
     int pat_h_pix;  // pattern horizonal pixels

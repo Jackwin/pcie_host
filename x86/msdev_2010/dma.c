@@ -146,7 +146,7 @@ DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr,
 }
 
 // Start DMA
-void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_line, BOOL fromDev, DWORD vendor_id, DWORD device_id) {
+void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_line, BOOL fromDev, DWORD vendor_id, DWORD device_id, DMD_PATTERN *dmd_pat_ptr) {
     int next_pattern_size = 0;
     long des_addr = 0;
     int dma_dt_cnt = 0;
@@ -178,10 +178,7 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
     if (status != WD_STATUS_SUCCESS) {
         printf("Fail to initialize PCI.\n");
     }
-    //CPU memory address
-    //DWORD rd_buf_phy_addr_h = (bk_ptr->rp_rd_buffer_bus_addr >> 32) & 0xffffffff;
-   // DWORD rd_buf_phy_addr_l = bk_ptr->rp_rd_buffer_bus_addr & 0xffffffff;
-
+    /*
     for (int k = 0; k < pattern_num; k++) {
         char pattern_name[30];
         strcpy(pattern_name, prefix);
@@ -216,12 +213,10 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
             PatternFill(pattern_name, h_pix, v_line);
         }
     }
-    
+    */
 
     if (!fromDev) {
-
         DWORD status = WDC_DMAContigBufLock(hDev, &ppBuf, DMA_TO_DEVICE, sizeof(struct altera_pcie_dma_bookkeep), &pDMA);
-        //ppBuf = (struct altera_pcie_dma_bookkeep *) malloc(sizeof(struct altera_pcie_dma_bookkeep));
         bk_ptr = (struct altera_pcie_dma_bookkeep *)ppBuf;
         if (status != WD_STATUS_SUCCESS) {
             printf("Fail to initiate DMAContigBuf.\n");
@@ -252,7 +247,7 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
 
             //Copy data to dmd_pattern_ptr
             for (int m = 0; m < (1920 * 1080 / 32); m++) {
-                dmd_pattern_ptr->data[m] = dmd_pattern_data.data[m];
+                dmd_pattern_ptr->data[m] = dmd_pat_ptr->data[m];
             }
 
             //printf("dmd_pattern page number is %d.\n", ppDMA_rd_buf_array[i]->dwPages);
@@ -318,19 +313,16 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
             WDC_ReadAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, &last_id);
             printf("After DT, last_id is %x.\n", last_id);
             if (last_id == 0xff) {
-                //ConfigDMADescController(hDev, bk_ptr->lite_table_rd_bus_addr, fromDev);
                 last_id = 127;
             }
             //last_id = last_id + ppDMA1_rd_buf->dwPages;
-            last_id = last_id + 128;
+            last_id = last_id + 1;
 
             if (last_id > 127) {
                 last_id = last_id - 128;
                 //if ((ppDMA1_rd_buf->dwPages > 1) && (last_id != 127)) write_127 = 1;
                 if (last_id != 127) write_127 = 1;
             }
-           // if (k == 0)
-            //    ConfigDMADescController(hDev, bk_ptr->lite_table_rd_bus_addr, (last_id + pattern_name - 1), fromDev);
             if (write_127) {
                 WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, 127);
             }
@@ -376,4 +368,41 @@ void DMAOperation(int pattern_num, char *prefix, char *format, int h_pix, int v_
 
         close_pci(hDev);
         return TRUE;
+  }
+
+  void GeneratePatternData(int pattern_num, char *prefix, char *format, int h_pix, int v_line) {
+      for (int k = 0; k < pattern_num; k++) {
+          char pattern_name[30];
+          strcpy(pattern_name, prefix);
+          char num[6];
+          itoa(0, num, 10);
+          strcat(pattern_name, num);
+          printf("pattern name is %s.\n", pattern_name);
+          strcat(pattern_name, ".");
+          strcat(pattern_name, format);
+          //printf("pattern name is %s.\n", pattern_name);
+          FILE *fp = OpenPattern(pattern_name, "r");
+          // The maximum number of DMA DT is 128, starting from 0 to 127
+          int pattern_size = CalcualtePatternSize(fp);
+          printf("pattern_size is %d.\n", pattern_size);
+          CloseFile(fp);
+          // One page corresponds to one DMA Descriptor Table
+          int page_num = (pattern_size % PAGE_SIZE == 0) ? (pattern_size / PAGE_SIZE) : (pattern_size / PAGE_SIZE + 1);
+          if (h_pix == 1920) {
+              int int_num_per_line = h_pix / 32;  // The number of Int in every line
+              int hex_num_per_line = h_pix / 4;
+
+              for (int line_index = 0; line_index < v_line; line_index++) {
+                  for (int j = 0; j < int_num_per_line; j++) {
+                      //(int_num_per_line + 2) means there are 2 '\n' at every end of line
+                      dmd_pattern_data[k].data[line_index * int_num_per_line + j] = ReadDMDPattern(pattern_name, (line_index * (hex_num_per_line + 2) + j * 8), 8);
+                  }
+              }
+          }
+          else {
+              int int_num_per_line = h_pix / 32;  // The number of Int in every line
+              int hex_num_per_line = h_pix / 4;
+              PatternFill(pattern_name, h_pix, v_line);
+          }
+      }
   }
