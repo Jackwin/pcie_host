@@ -188,7 +188,7 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
     DMA_ADDR mem_start_addr;
     DWORD current_page_size, pre_page_size;
 
-    if (target == 1 && (onchip_mem_base_addr + data_size >= ONCHIP_MEM_SIZE)) {
+    if (target == 1 && (data_size > ONCHIP_MEM_SIZE)) {
         printf("Oversize the onchip memory.\n");
         return 0;
     }
@@ -228,7 +228,6 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
             DWORD rd_buf_phy_addr_h, rd_buf_phy_addr_l;
             // Actual descriptors
             if (i < descriptor_num) {
-                printf("%d ...........\n", i);
                 status = WDC_DMAContigBufLock(hDev, &ppBuf_array[i], DMA_TO_DEVICE, DMA_SIZE_PER_DESCRIPTOR, &pDMA_rd_buf_array[i]);
                 //ppBuf = (struct altera_pcie_dma_bookkeep *) malloc(sizeof(struct altera_pcie_dma_bookkeep));
                 pdata = (int *)ppBuf_array[i];
@@ -236,19 +235,10 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
                     printf("Fail to initiate DMAContigBuf for dmd_pattern.\n");
                     printf("status is %x.\n", status);
                 }
-                //Copy data
-                if (i == 77)
-                    printf("hi.\n");
                 // Change to int address
                 int source_data_addr = source_data_ptr + (dt_index * (128 * DMA_SIZE_PER_DESCRIPTOR) + i * DMA_SIZE_PER_DESCRIPTOR) / 4;
                 printf("source data address is %x.\n", source_data_addr);
                 memcpy(pdata, (int *)(source_data_addr), DMA_SIZE_PER_DESCRIPTOR);
-                printf("pdata[0] is %x.\n", *pdata);
-
-                //(bk_ptr->rp_rd_buffer_virt_addr) = pDMA_rd_buf_array[i]->pUserAddr;
-                //(bk_ptr->rp_rd_buffer_bus_addr) = pDMA_rd_buf_array[i]->Page[0].pPhysicalAddr;
-               // printf("pDMA_rd_buf_array[%d] physical address is 0x %x.\n",i, bk_ptr->rp_rd_buffer_bus_addr);
-
                 status = WDC_DMASyncCpu(pDMA_rd_buf_array[i]);
                 if (status != WD_STATUS_SUCCESS) {
                     printf("Fail to Sync pDMA_rd_buf_array[%d].\n", i);
@@ -261,8 +251,6 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
                 }
 
                 // CPU memory physical address
-                // rd_buf_phy_addr_h = (bk_ptr->rp_rd_buffer_bus_addr >> 32) & 0xffffffff;
-                 //rd_buf_phy_addr_l = bk_ptr->rp_rd_buffer_bus_addr & 0xffffffff;
                 rd_buf_phy_addr_h = (pDMA_rd_buf_array[i]->Page[0].pPhysicalAddr >> 32) & 0xffffffff;
                 rd_buf_phy_addr_l = (pDMA_rd_buf_array[i]->Page[0].pPhysicalAddr) & 0xffffffff;
 
@@ -277,7 +265,6 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
                     printf("mem_start_addr is 0x%x.\n", mem_start_addr);
                 }
                 else {
-                    // int addr_inc = ((pre_page_size % 32 == 0) ? (pre_page_size / 32) : (pre_page_size / 32 + 1));
                     mem_start_addr = mem_start_addr + pre_page_size;
                     printf("mem_start_addr is %x.\n", mem_start_addr);
                     current_page_size = pDMA_rd_buf_array[i]->Page[0].dwBytes;
@@ -355,8 +342,11 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
     for (int i = 0; i < 128; i++) {
         int addr = 0x60 + i * 0x3f480;
         WDC_ReadAddr32(hDev, ALTERA_AD_BAR4,addr, &read_data);
-        printf("%d: Read_data from Address %x is %x.\n",i, addr, read_data);
+        printf("%d: Read_data from DDR3 Address %x is %x.\n",i, addr, read_data);
     }
+    int addr = 0x60 + ONCHIP_MEM_BASE_ADDR_LOW;
+    WDC_ReadAddr32(hDev, ALTERA_AD_BAR4, addr, &read_data);
+    printf("Read_data from onchip memory Address %x is %x.\n", addr, read_data);
     close_pci(hDev);
     return TRUE;
 }
@@ -406,6 +396,7 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
  
   int DMAOperation(DWORD vendor_id, DWORD device_id) {
       GeneratePatternData(1, "model", "txt", 1920, 1080);
-      int status = FPGA_read(vendor_id, device_id, (int *)(dmd_pattern_data),sizeof(DMD_PATTERN) * PATTERN_NUMBER, 0x60, 0, 0);
+      //int status = FPGA_read(vendor_id, device_id, (int *)(dmd_pattern_data),sizeof(DMD_PATTERN) * PATTERN_NUMBER, 0x60, 0, 0);
+      int status = FPGA_read(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN), 0x60, 0, 1);
       return status;
   }
