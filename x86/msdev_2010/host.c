@@ -53,7 +53,8 @@ int main() {
          return 0;
      }
      */
-    DMAOperation(1, "model","txt", 1920, 1080, 0, VENDOR_ID, DEVICE_ID);
+    DMAOperation( VENDOR_ID, DEVICE_ID);
+
 //    PatternFill("model1_480x270.txt", 480, 270);
     /*
     if (!PCI_Get_WD_handle(&hDev)) {

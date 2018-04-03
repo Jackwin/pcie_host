@@ -72,7 +72,7 @@ extern "C" {
 #define ONCHIP_MEM_BASE_ADDR_HI         0x00000000
 #define ONCHIP_MEM_BASE_ADDR_LOW        0x08000000
 #define ONCHIP_MEM_DESC_MEM_BASE        0x0000
-#define ONCHIP_MEM_SIZE
+#define ONCHIP_MEM_SIZE                 (1 << 18)  //256K
 
 //DDR3 128MB 0x0000_0000_0000_0000 - 0x0000_0000_07ff_ffff
 #define DDR_MEM_BASE_ADDR_HI            0x00000000
@@ -85,7 +85,7 @@ extern "C" {
 #define PAGE_SIZE (0x01 << 12) //4K
 #define MAX_NUM_DWORDS 1024
 
-#define TIMEOUT 0x20000
+#define TIMEOUT 0x2000000
 
 /* Internal data structures */
 
