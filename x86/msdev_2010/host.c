@@ -27,7 +27,7 @@ typedef struct
 } CARD_STRUCT;
 
 int main() {
-    WDC_DEVICE_HANDLE hDev = NULL;
+   // WDC_DEVICE_HANDLE hDev = NULL;
     DWORD dwStatus;
     ALTERA_HANDLE hALTERA =NULL;
     CARD_STRUCT card;
@@ -53,8 +53,22 @@ int main() {
          return 0;
      }
      */
-    DMAOperation( VENDOR_ID, DEVICE_ID);
 
+    if (!PCI_Get_WD_handle(&hDev)) {
+        printf("Fail to get WD_handle.\n");
+        return 0;
+    }
+    // WD_Close(hDev);
+    int status = initialize_PCI(VENDOR_ID, DEVICE_ID);
+    if (status != WD_STATUS_SUCCESS) {
+        printf("Fail to initialize PCI, %d.\n", status);
+    }
+  
+    DMAOperation( VENDOR_ID, DEVICE_ID);
+    status = close_pci(hDev);
+    if (status != 0) {
+        printf("Fail to cloese pci.\n");
+    }
 //    PatternFill("model1_480x270.txt", 480, 270);
     /*
     if (!PCI_Get_WD_handle(&hDev)) {

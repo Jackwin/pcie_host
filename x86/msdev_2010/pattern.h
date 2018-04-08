@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#define PATTERN_NUMBER (257)
+#define PATTERN_NUMBER (437)
 #define HORIZONTAL_PIXEL (1920)
 #define VERTICAL_LINE  (1080)
 
@@ -38,6 +38,8 @@ typedef struct DMD_DESCRIPTOR {
     int pat_end_addr; // The end address of patterns in FPGA DDR3
     int pat_rsv;  // Reserved
 }DMD_DT;
+
+
 /*
 DMD_DT dt_1920x1080 = {
 .pat_h_pix = 1920,
