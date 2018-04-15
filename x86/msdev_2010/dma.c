@@ -153,6 +153,7 @@ param:  vendor_id
         device_id
         source_data_ptr: the data to be sent in the CPU memory
         data_size: the size of the to-be-sent data in byte
+        byte_per_descriptor: the data size in one descriptor 
         fpga_ddr3_addr_offset: the offset address. The starting addres in FPGA ddr3 is 0
         fpga_onchip_addr_offset:
         target: 0 stands for copying data to FPGA DDR3
@@ -160,7 +161,7 @@ param:  vendor_id
 Return:
 */
 
-int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_size, int fpga_ddr3_addr_offset, int fpga_onchip_addr_offset, int target) {
+int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_size, int byte_per_descriptor, int fpga_ddr3_addr_offset, int fpga_onchip_addr_offset, int target) {
     DWORD last_id = 0, write_127 = 0;
     DWORD timeout;
     WD_DMA *pDMA = NULL, *ppDMA_wr = NULL, *ppDMA_wr_buf = NULL;
@@ -183,7 +184,8 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
     DMA_ADDR offchip_mem_base_addr = (DDR_MEM_BASE_ADDR_HI << 32) + DDR_MEM_BASE_ADDR_LOW + fpga_ddr3_addr_offset;
     DMA_ADDR offchip_mem_start_addr;
 
-    DMA_ADDR onchip_mem_base_addr = (ONCHIP_MEM_BASE_ADDR_HI << 32) + ONCHIP_MEM_BASE_ADDR_LOW + 3 * 32 + fpga_onchip_addr_offset;
+   // DMA_ADDR onchip_mem_base_addr = (ONCHIP_MEM_BASE_ADDR_HI << 32) + ONCHIP_MEM_BASE_ADDR_LOW + 3 * 32 + fpga_onchip_addr_offset;
+    DMA_ADDR onchip_mem_base_addr = (ONCHIP_MEM_BASE_ADDR_HI << 32) + ONCHIP_MEM_BASE_ADDR_LOW + fpga_onchip_addr_offset;
     DMA_ADDR onchip_mem_start_addr;
     DMA_ADDR mem_start_addr;
     DWORD current_page_size, pre_page_size;
@@ -192,36 +194,10 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
         printf("Oversize the onchip memory.\n");
         return 0;
     }
-    /*
-    // Initialize PCI device
-    if (!PCI_Get_WD_handle(&hDev)) {
-        printf("Fail to get WD_handle.\n");
-        return 0;
-    }
-  // WD_Close(hDev);
-    status = initialize_PCI(vendor_id, device_id);
-    if (status != WD_STATUS_SUCCESS) {
-        printf("Fail to initialize PCI, %d.\n", status);
-    }
-    */
-    // ----------- Set up bookkeep for the descriptor table ---------------------------------------------------
-    /*
-    status = WDC_DMAContigBufLock(hDev, &ppBuf, DMA_TO_DEVICE, sizeof(struct altera_pcie_dma_bookkeep), &pDMA);
-    bk_ptr = (struct altera_pcie_dma_bookkeep *)ppBuf;
-    if (status != WD_STATUS_SUCCESS) {
-        printf("Fail to initiate DMAContigBuf for pDMA.\n");
-        printf("status is %x.\n", status);
-        return 0;
-    }
-    printf("DMA page number is %d.\n", pDMA->dwPages);
-    set_lite_table_header(&(bk_ptr->lite_table_rd_cpu_virt_addr.header));
-    set_lite_table_header(&(bk_ptr->lite_table_wr_cpu_virt_addr.header));
-    // Get the descriptor table physical address
-    bk_ptr->lite_table_rd_bus_addr = pDMA->Page[0].pPhysicalAddr;
-    */
-
+ 
     //-------------------------Move data from CPU memory to FPGA--------------------------------------------
     for (int dt_index = 0; dt_index < dt_num; dt_index++) {
+        // --------------------- Initialize the bookkeep --------------------------------------------------
         status = WDC_DMAContigBufLock(hDev, &ppBuf, DMA_TO_DEVICE, sizeof(struct altera_pcie_dma_bookkeep), &pDMA);
         bk_ptr = (struct altera_pcie_dma_bookkeep *)ppBuf;
         if (status != WD_STATUS_SUCCESS) {
@@ -243,7 +219,7 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
             DWORD rd_buf_phy_addr_h, rd_buf_phy_addr_l;
             // Actual descriptors
             if (i < descriptor_num) {
-                status = WDC_DMAContigBufLock(hDev, &ppBuf_array[i], DMA_TO_DEVICE, DMA_SIZE_PER_DESCRIPTOR, &pDMA_rd_buf_array[i]);
+                status = WDC_DMAContigBufLock(hDev, &ppBuf_array[i], DMA_TO_DEVICE, byte_per_descriptor, &pDMA_rd_buf_array[i]);
                 //ppBuf = (struct altera_pcie_dma_bookkeep *) malloc(sizeof(struct altera_pcie_dma_bookkeep));
                 pdata = (int *)ppBuf_array[i];
                 if (status != WD_STATUS_SUCCESS) {
@@ -253,9 +229,9 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
                 // Change to int address
                // int source_data_addr = source_data_ptr + (dt_index * (128 * DMA_SIZE_PER_DESCRIPTOR) + i * DMA_SIZE_PER_DESCRIPTOR) / 4;
                 // Repeat copy the same data. Just as an example
-                int source_data_addr = source_data_ptr + i * DMA_SIZE_PER_DESCRIPTOR / 4;
+                int source_data_addr = source_data_ptr + i * byte_per_descriptor / 4;
                 //printf("source data address is %x.\n", source_data_addr);
-                memcpy(pdata, (int *)(source_data_addr), DMA_SIZE_PER_DESCRIPTOR);
+                memcpy(pdata, (int *)(source_data_addr), byte_per_descriptor);
                 status = WDC_DMASyncCpu(pDMA_rd_buf_array[i]);
                 if (status != WD_STATUS_SUCCESS) {
                     printf("Fail to Sync pDMA_rd_buf_array[%d].\n", i);
@@ -368,8 +344,6 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
 
     }
 
-   // WDC_DMASyncIo(pDMA);
-   // WDC_DMABufUnlock(pDMA);
     int read_data;
     int check_fail = 0;
     for (int i = 0; i < total_descriptor_num; i++) {
@@ -383,19 +357,7 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
     }
     if (check_fail) printf("Fail to check the data.\n");
     else printf("Success to check the data.\n");
-   // WDC_ReadAddr32(hDev, ALTERA_AD_BAR4, (0x3f480 * (total_descriptor_num - 1) + fpga_ddr3_addr_offset), &read_data);
-    //printf("%d: Read_data from DDR3 Address %x is %x.\n", total_descriptor_num, (0x3f480 * (total_descriptor_num - 1) + fpga_ddr3_addr_offset), read_data);
-    
-    int addr = 0x60 + ONCHIP_MEM_BASE_ADDR_LOW;
-    WDC_ReadAddr32(hDev, ALTERA_AD_BAR4, addr, &read_data);
-    printf("Read_data from onchip memory Address %x is %x.\n", addr, read_data);
 
-    /*
-    status = close_pci(hDev);
-    if (status != 0) {
-        printf("Fail to cloese pci.\n");
-    }
-    */
     return TRUE;
 }
 
@@ -445,11 +407,27 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
   int DMAOperation(DWORD vendor_id, DWORD device_id) {
       GeneratePatternData(1, "model", "txt", 1920, 1080);
       int status;
-       
-      status = FPGA_read(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * PATTERN_NUMBER, 0, 0, 0);
-      //status = FPGA_read(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * PATTERN_NUMBER, 0x1fa4000, 0, 0);
-      int delay = 10000;
-    //  while (delay--);
-    //  status = FPGA_read(0x1172, 0xe003, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN), 0x60, 0, 1);
+      int read_data;
+      int to_send_frame_num = 2;
+      status = FPGA_read(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * to_send_frame_num, DMA_SIZE_PER_DESCRIPTOR ,0, 0, 0);
+     // status = FPGA_read(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN), 0, 0, 1);
+    
+  
+      WPS_REG wps_register;
+      wps_register.rsv_reg = 0xffffeeee;
+      wps_register.capture_pulse_cycle_reg = 200;
+      wps_register.start_addr_reg = 0;
+      wps_register.to_send_total_byte_reg = to_send_frame_num * 1920 * 1080 / 8;
+      wps_register.pattern_reg = (1920 << 16) | 1080;
+      wps_register.one_frame_byte_reg = 1920 * 1080 / 8;
+      wps_register.to_send_frame_num_reg = to_send_frame_num;
+      wps_register.start_play_reg = (1 << 31);
+
+      status = FPGA_read(vendor_id, device_id, (int *)(&wps_register), sizeof(WPS_REG), sizeof(WPS_REG), 0, 0, 1);
+      for (int i = 0; i < 8; i++) {
+          WDC_ReadAddr32(hDev, ALTERA_AD_BAR4, (ONCHIP_MEM_BASE_ADDR_LOW + i * 4 ), &read_data);
+          printf("Read_data from onchip memory Address %x is %x.\n", (ONCHIP_MEM_BASE_ADDR_LOW + i * 4), read_data);
+     }
+      
       return status;
   }
