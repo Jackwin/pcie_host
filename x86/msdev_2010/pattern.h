@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#define PATTERN_NUMBER (437)
+#define PATTERN_NUMBER (256)
 #define HORIZONTAL_PIXEL (1920)
 #define VERTICAL_LINE  (1080)
 
