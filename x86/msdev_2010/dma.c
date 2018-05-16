@@ -115,7 +115,7 @@ int DMAToOnchipMem(DMA_ADDR cpu_memory_start_addr, int byte_size, int fpga_onchi
     DWORD onchip_mem_addr_h = (onchip_mem_base_addr >> 32) & 0xffffffff;
     DWORD onchip_mem_addr_l = onchip_mem_base_addr & 0xffffffff;
 
-    SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[i]), cpu_mem_addr_h, cpu_mem_addr_l, onchip_mem_addr_h, onchip_mem_addr_l, dma_dword, i);
+    SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[0]), cpu_mem_addr_h, cpu_mem_addr_l, onchip_mem_addr_h, onchip_mem_addr_l, dma_dword, 0);
 
     status = WDC_DMASyncCpu(pDMA);
     if (WD_STATUS_SUCCESS != status) {
@@ -144,7 +144,7 @@ int DMAToOnchipMem(DMA_ADDR cpu_memory_start_addr, int byte_size, int fpga_onchi
         }
     }
 
-    DC_DMASyncIo(pDMA_memory_space);
+    WDC_DMASyncIo(pDMA_memory_space);
     WDC_DMABufUnlock(pDMA_memory_space);
 
     WDC_DMASyncIo(pDMA);
@@ -263,7 +263,7 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
                         mem_start_addr = onchip_mem_base_addr;
 
                     current_page_size = pDMA_rd_buf_array[0]->Page[0].dwBytes;
-                    printf("current_page_size is %d.\n", current_page_size);
+                 //   printf("current_page_size is %d.\n", current_page_size);
                    // printf("mem_start_addr is 0x%x.\n", mem_start_addr);
                 }
                 else {
@@ -280,11 +280,11 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
             DWORD dma_dword = (current_page_size) / 4; // Dword number
 
            // printf("mem_addr_h is %x, mem_addr_l is %x.\n", mem_addr_h, mem_addr_l);
-            printf("dma_dword is %d.\n", dma_dword);
+           // printf("dma_dword is %d.\n", dma_dword);
             SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[i]), rd_buf_phy_addr_h, rd_buf_phy_addr_l, mem_addr_h, mem_addr_l, dma_dword, i);
         }
-        printf("\n");
-        printf("Start to DMA. ROUND %d. \n", (dt_index + 1));
+       // printf("\n");
+        //printf("Start to DMA. ROUND %d. \n", (dt_index + 1));
         status = WDC_DMASyncCpu(pDMA);
             if (WD_STATUS_SUCCESS != status) {
             printf("Fail to CPUSync ppDMA.\n");
@@ -607,6 +607,8 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
     int status;
     int read_data;
     int to_send_frame_num = 1;
+    clock_t start, finish;
+    double  duration;
    // status = FPGA_read(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * to_send_frame_num, DMA_SIZE_PER_DESCRIPTOR ,0, 0, 0);
 
    // status = FPGA_read(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * to_send_frame_num, DMA_SIZE_PER_DESCRIPTOR, 0, 0x20, 1);
@@ -626,7 +628,12 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
     int *pdata;
     pdata = ApplyMemorySpace(sizeof(DMD_PATTERN) * to_send_frame_num,DMA_TO_DEVICE);
     DMA_ADDR cpu_start_mem_addr = pDMA_memory_space->Page[0].pPhysicalAddr + sizeof(DMD_PATTERN) * to_send_frame_num;
+    start = clock();
     DMAToOnchipMem(cpu_start_mem_addr, sizeof(DMD_PATTERN) * to_send_frame_num, 0x20);
+    status = FPGA_read(vendor_id, device_id, (int *)(&wps_register), sizeof(WPS_REG), sizeof(WPS_REG), 0, 0, 1);
+    finish = clock();
+    duration = (double)(finish - start) / CLOCKS_PER_SEC;
+    printf("%f seconds\n", duration);
     //status = FPGA_read(vendor_id, device_id, (int *)(&wps_register), sizeof(WPS_REG), sizeof(WPS_REG), 0, 0, 1);
     /*
     for (int i = 0; i < 8; i++) {
