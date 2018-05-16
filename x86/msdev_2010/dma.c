@@ -69,21 +69,28 @@ DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr,
 
 }
 
-void ApplyMemorySpace(DMD_PATTERN * source_data_ptr, int byte_size, DWORD direction) {
+int *ApplyMemorySpace(int byte_size, DWORD direction) {
     static  DWORD status;
-   // status = WDC_DMAContigBufLock(hDev, &ppBuf, DMA_TO_DEVICE, byte_size, &pDMA_memory_space);
-    status = WDC_DMASGBufLock(hDev, source_data_ptr, DMA_TO_DEVICE, byte_size, &pDMA_memory_space);
+    PVOID ppBuf;
+    int *pdata;
+
+    status = WDC_DMAContigBufLock(hDev, &ppBuf, DMA_TO_DEVICE | DMA_ALLOW_CACHE | DMA_ALLOW_64BIT_ADDRESS, byte_size, &pDMA_memory_space);
+   // status = WDC_DMASGBufLock(hDev, source_data_ptr, DMA_TO_DEVICE, byte_size, &pDMA_memory_space);
     if (status != WD_STATUS_SUCCESS) {
-        printf("Fail to apply memory space.\n");
+        printf("Fail to apply contiguous memory space.\n");
         printf("status is %x.\n", status);
     }
     status = WDC_DMASyncCpu(pDMA_memory_space);
     if (status != WD_STATUS_SUCCESS) {
         printf("Fail to Sync pDMA for applying memory space.\n");
     }
+    pdata = (int *)ppBuf;
+
+    return pdata;
+
 }
 
-int DMAToOnchipMem(int byte_size, int fpga_onchip_addr_offset) {
+int DMAToOnchipMem(DMA_ADDR cpu_memory_start_addr, int byte_size, int fpga_onchip_addr_offset) {
     static DWORD status;
     DWORD timeout;
     DWORD last_id = 0;
@@ -102,30 +109,17 @@ int DMAToOnchipMem(int byte_size, int fpga_onchip_addr_offset) {
     set_lite_table_header(&(bk_ptr->lite_table_wr_cpu_virt_addr.header));
     // Get the descriptor table physical address
     bk_ptr->lite_table_rd_bus_addr = pDMA->Page[0].pPhysicalAddr;
-    DMA_ADDR cpu_mem_addr;
 
     DWORD dma_dword = (byte_size) / 4; // Dword number
     DMA_ADDR onchip_mem_base_addr = (ONCHIP_MEM_BASE_ADDR_HI << 32) + ONCHIP_MEM_BASE_ADDR_LOW + fpga_onchip_addr_offset;
-    
-    page_num = pDMA_memory_space->dwPages;
-    for (int k = 0; k < page_num; k++) {
-        cpu_mem_addr = pDMA_memory_space->Page[k].pPhysicalAddr;
-        if (k == 0) {
-           // cpu_mem_addr = cpu_mem_addr;
-            onchip_mem_base_addr = onchip_mem_base_addr;
-        }
-        else {
-           // cpu_mem_addr = cpu_mem_addr + pDMA_memory_space->Page[k - 1].dwBytes;
-            onchip_mem_base_addr = onchip_mem_base_addr + pDMA_memory_space->Page[k - 1].dwBytes;
-        }
-            
-        DWORD cpu_mem_addr_h = (cpu_mem_addr >> 32) & 0xffffffff;
-        DWORD cpu_mem_addr_l = cpu_mem_addr & 0xffffffff;
-        DWORD onchip_mem_addr_h = (onchip_mem_base_addr >> 32) & 0xffffffff;
-        DWORD onchip_mem_addr_l = onchip_mem_base_addr & 0xffffffff;
-        SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[k]), cpu_mem_addr_h, cpu_mem_addr_l, onchip_mem_addr_h, onchip_mem_addr_l, dma_dword, k);
-   }
-        
+
+
+    DWORD cpu_mem_addr_h = (cpu_memory_start_addr >> 32) & 0xffffffff;
+    DWORD cpu_mem_addr_l = cpu_memory_start_addr & 0xffffffff;
+    DWORD onchip_mem_addr_h = (onchip_mem_base_addr >> 32) & 0xffffffff;
+    DWORD onchip_mem_addr_l = onchip_mem_base_addr & 0xffffffff;
+    SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[0]), cpu_mem_addr_h, cpu_mem_addr_l, onchip_mem_addr_h, onchip_mem_addr_l, dma_dword, 0);
+
 
     status = WDC_DMASyncCpu(pDMA);
     if (WD_STATUS_SUCCESS != status) {
@@ -135,7 +129,7 @@ int DMAToOnchipMem(int byte_size, int fpga_onchip_addr_offset) {
     WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTRL_HIGH_DEST_ADDR, RD_CTRL_BUF_BASE_HI);
     WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTLR_LOW_DEST_ADDR, RD_CTRL_BUF_BASE_LOW);
 
-    last_id = page_num - 1;
+    last_id = 0;
     WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_TABLE_SIZE, last_id);
 
     WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, last_id);
@@ -148,7 +142,7 @@ int DMAToOnchipMem(int byte_size, int fpga_onchip_addr_offset) {
         }
         timeout--;
         if (timeout == 0) {
- 
+
             printf("DMA read operation is timeout.\n");
             break;
         }
@@ -238,7 +232,7 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
             // Actual descriptors
             if (i < descriptor_num) {
                 status = WDC_DMAContigBufLock(hDev, &ppBuf_array[i], DMA_TO_DEVICE, byte_per_descriptor, &pDMA_rd_buf_array[i]);
-                
+
                 //ppBuf = (struct altera_pcie_dma_bookkeep *) malloc(sizeof(struct altera_pcie_dma_bookkeep));
                 pdata = (int *)ppBuf_array[i];
                 if (status != WD_STATUS_SUCCESS) {
@@ -620,7 +614,7 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
     int to_send_frame_num = 1;
     clock_t start, finish;
     double  duration;
-  
+
    // status = FPGA_read(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * to_send_frame_num, DMA_SIZE_PER_DESCRIPTOR ,0, 0, 0);
 
 
@@ -639,11 +633,19 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
    // wps_register.start_play_reg = (1 << 31);
 
     int *pdata;
+    pdata = ApplyMemorySpace(sizeof(DMD_PATTERN) * to_send_frame_num,DMA_TO_DEVICE);
+    for (int k = 0; k < to_send_frame_num; k++)
+        memcpy((pdata + sizeof(DMD_PATTERN) * k / 4), (int *) dmd_pattern_data, sizeof(DMD_PATTERN));
+
+    DMA_ADDR cpu_memory_start_addr = pDMA_memory_space->Page[0].pPhysicalAddr;
     //pDMA_memory_space = (WD_DMA *)malloc(sizeof(WD_DMA));
     //memset(pDMA_memory_space, 0, sizeof(WD_DMA));
     start = clock();
-    ApplyMemorySpace(dmd_pattern_data, sizeof(DMD_PATTERN),DMA_TO_DEVICE, pDMA_memory_space);
-    DMAToOnchipMem(sizeof(DMD_PATTERN), 0x20, pDMA_memory_space);
+    for (int k = 0; k < to_send_frame_num; k++) {
+         cpu_memory_start_addr = cpu_memory_start_addr + k * sizeof(DMD_PATTERN);
+         DMAToOnchipMem(cpu_memory_start_addr, sizeof(DMD_PATTERN), 0x20);
+    }
+
     WDC_DMABufUnlock(pDMA_memory_space);
    // free(pDMA_memory_space);
     //status = FPGA_read(vendor_id, device_id, (int *)(&wps_register), sizeof(WPS_REG), sizeof(WPS_REG), 0, 0, 1);
@@ -652,8 +654,8 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
     finish = clock();
     duration = (double)(finish - start) / CLOCKS_PER_SEC;
     printf("%f seconds\n", duration);
-    
-    
+
+
     //for (int k = 0; k < to_send_frame_num; k++) {
        // DMAToOnchipMem(cpu_start_mem_addr, sizeof(DMD_PATTERN), 0x20);
       //  WDC_DMASyncIo(pDMA_memory_space);
@@ -665,7 +667,7 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
      //WDC_DMASyncIo(pDMA_memory_space);
     //WDC_DMABufUnlock(pDMA_memory_space);
     //free(pdata);
-   
+
     //status = FPGA_read(vendor_id, device_id, (int *)(&wps_register), sizeof(WPS_REG), sizeof(WPS_REG), 0, 0, 1);
     /*
     for (int i = 0; i < 8; i++) {
@@ -684,4 +686,4 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
     rd_data_ptr = NULL;
     */
     return status;
-} 
+}
