@@ -70,7 +70,7 @@ extern "C" {
 
 // On-chip 4KB FIFO 0x0000_0000_0800_0000 - 0x0000_0000_0800_ffff
 #define ONCHIP_MEM_BASE_ADDR_HI         0x00000000
-#define ONCHIP_MEM_BASE_ADDR_LOW        0x08000000
+#define ONCHIP_MEM_BASE_ADDR_LOW        0x10000000
 #define ONCHIP_MEM_DESC_MEM_BASE        0x0000
 #define ONCHIP_MEM_SIZE                 (1 << 18)  //256K
 

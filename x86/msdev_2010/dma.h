@@ -18,7 +18,7 @@
 #define     DDR3_SOURCE 0x40000000
 #define     ONCHIP_MEM_SOURCE 0x0
 typedef struct {
-    
+
     int start_play_reg;
     int capture_pulse_cycle_reg;
     int start_addr_reg;
@@ -39,5 +39,7 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
 void GeneratePatternData(int pattern_num, char *prefix, char *format, int h_pix, int v_line);
 int* FPGA_write_to_CPU(int data_size, int byte_per_descriptor, int fpga_ddr3_addr_offset, int fpga_onchip_addr_offset, int target);
 int DMAOperation(DWORD vendor_id, DWORD device_id);
+int *ApplyMemorySpace(int byte_size, DWORD direction);
+int DMAToOnchipMem(DMA_ADDR cpu_memory_start_addr, int byte_size, int fpga_onchip_addr_offset);
 #endif // !_DMA_H
 
