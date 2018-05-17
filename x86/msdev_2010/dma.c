@@ -611,7 +611,7 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
     GeneratePatternData(1, "model", "txt", 1920, 1080);
     int status;
     int read_data;
-    int to_send_frame_num = 1;
+    int to_send_frame_num = 100;
     clock_t start, finish;
     double  duration;
 
@@ -633,22 +633,23 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
    // wps_register.start_play_reg = (1 << 31);
 
     int *pdata;
+    start = clock();
     pdata = ApplyMemorySpace(sizeof(DMD_PATTERN) * to_send_frame_num,DMA_TO_DEVICE);
+    
     for (int k = 0; k < to_send_frame_num; k++)
         memcpy((pdata + sizeof(DMD_PATTERN) * k / 4), (int *) dmd_pattern_data, sizeof(DMD_PATTERN));
-
+    
     DMA_ADDR cpu_memory_start_addr = pDMA_memory_space->Page[0].pPhysicalAddr;
-    //pDMA_memory_space = (WD_DMA *)malloc(sizeof(WD_DMA));
-    //memset(pDMA_memory_space, 0, sizeof(WD_DMA));
     start = clock();
     for (int k = 0; k < to_send_frame_num; k++) {
          cpu_memory_start_addr = cpu_memory_start_addr + k * sizeof(DMD_PATTERN);
          DMAToOnchipMem(cpu_memory_start_addr, sizeof(DMD_PATTERN), 0x20);
+       //  status = FPGA_read(vendor_id, device_id, (int *)(&wps_register), sizeof(WPS_REG), sizeof(WPS_REG), 0, 0, 1);
     }
-
+    
     WDC_DMABufUnlock(pDMA_memory_space);
    // free(pDMA_memory_space);
-    //status = FPGA_read(vendor_id, device_id, (int *)(&wps_register), sizeof(WPS_REG), sizeof(WPS_REG), 0, 0, 1);
+    //);
     //for (int k = 0; k < to_send_frame_num; k++)
        // memcpy((pdata + (sizeof(DMD_PATTERN)/ 4 * k)), (int *)(dmd_pattern_data), sizeof(DMD_PATTERN));
     finish = clock();
