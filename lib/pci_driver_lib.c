@@ -49,8 +49,8 @@ static BOOL DeviceValidate(const PWDC_DEVICE pDev);
 static void DLLCALLCONV PCI_DRIVER_IntHandler(PVOID pData);
 static void PCI_DRIVER_EventHandler(WD_EVENT *pEvent, PVOID pData);
 #endif
-static void ErrLog(const CHAR *sFormat, ...);
-static void TraceLog(const CHAR *sFormat, ...);
+//static void ErrLog(const CHAR *sFormat, ...);
+//static void TraceLog(const CHAR *sFormat, ...);
 
 static inline BOOL IsValidDevice(PWDC_DEVICE pDev, const CHAR *sFunc)
 {
@@ -549,7 +549,7 @@ static void ErrLog(const CHAR *sFormat, ...)
     va_end(argp);
 }
 
-static void TraceLog(const CHAR *sFormat, ...)
+ void TraceLog(const CHAR *sFormat, ...)
 {
 #if defined(DEBUG)
     CHAR sMsg[256];

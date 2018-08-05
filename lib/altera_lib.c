@@ -96,7 +96,7 @@ Return: 0 -- Success
         2 -- Fail to uninitialize the PCI driver library
 */
 DWORD close_pci (WDC_DEVICE_HANDLE hDev) {
-   // TraceLog("Start to close PCI...\n");
+    TraceLog("Start to close PCI...\n");
 
     DWORD dwStatus, i = 0;
     dwStatus = PCI_DRIVER_DeviceClose(hDev);
@@ -110,7 +110,7 @@ DWORD close_pci (WDC_DEVICE_HANDLE hDev) {
         WDC_Err("Failed to uninitialize the PCI driver library. Error 0x%lx - %s\n",dwStatus, Stat2Str(dwStatus));
         i++;
     }
-   // TraceLog("Success to close the PCI driver.\n");
+    TraceLog("Success to close the PCI driver.\n");
     return i;
 }
 
@@ -146,7 +146,7 @@ Error:
     *phWD = INVALID_HANDLE_VALUE;
     return FALSE;
 }
-/*
+
 // Set descriptor table
 BOOL SetDescTable(struct dma_descriptor *dma_desc, DWORD source_addr_high, DWORD source_addr_low, DWORD dest_addr_high, DWORD dest_addr_low, DWORD ctl_dma_len, WORD id) {
     dma_desc->src_addr_low = source_addr_low;
@@ -160,6 +160,23 @@ BOOL SetDescTable(struct dma_descriptor *dma_desc, DWORD source_addr_high, DWORD
     return 1;
 }
 
+// Use internal descriptor controller on FPGA
+BOOL ConfigDMADescController(WDC_DEVICE_HANDLE hDev, DMA_ADDR desc_table_start_addr, BOOL fromDev) {
+    DWORD dt_phy_addr_h = (desc_table_start_addr >> 32) & 0xffffffff;
+    DWORD dt_phy_addr_l = desc_table_start_addr & 0xffffffff;
+    // Move data from CPU to FPGA
+    if (!fromDev) {
+        // Program the address of the descriptor table to the DMA descriptor controller
+        WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_HIGH_SRC_ADDR, dt_phy_addr_h);
+        WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_LOW_SRC_ADDR, dt_phy_addr_l);
+    }
+    else {
+        WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_RC_HIGH_SRC_ADDR, dt_phy_addr_h);
+        WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_RC_LOW_SRC_ADDR, dt_phy_addr_l);
+    }
+    return TRUE;
+}
+/*
 BOOL ConfigDMADescController(WDC_DEVICE_HANDLE hDev, DMA_ADDR desc_table_start_addr, BOOL fromDev) {
     DWORD dt_phy_addr_h = (desc_table_start_addr >> 32) & 0xffffffff;
     DWORD dt_phy_addr_l = desc_table_start_addr & 0xffffffff;
@@ -251,6 +268,8 @@ DWORD FreePhysicalAddress(WD_DMA *pDMA) {
     }
     return 0;
 }
+
+
 /*
 DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr,  WD_DMA **ppDMA_rd_buf, WD_DMA **ppDMA_wr_buf) {
     printf("altera_pcie_dma_bookkeep size is %d.\n", sizeof(struct altera_pcie_dma_bookkeep));

@@ -105,7 +105,8 @@ BOOL PCI_DRIVER_GetAddrSpaceInfo(WDC_DEVICE_HANDLE hDev, PCI_DRIVER_ADDR_SPACE_I
 
 const char *PCI_DRIVER_GetLastErr(void);
 
-
+static void ErrLog(const CHAR *sFormat, ...);
+ void TraceLog(const CHAR *sFormat, ...);
 
 #ifdef __cplusplus
 }

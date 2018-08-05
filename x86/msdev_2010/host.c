@@ -63,12 +63,18 @@ int main() {
     if (status != WD_STATUS_SUCCESS) {
         printf("Fail to initialize PCI, %d.\n", status);
     }
-  
+    
+    status = PCI_DRIVER_IntEnable(hDev, DMAReadIntHandler);
+    if (status != WD_STATUS_SUCCESS) {
+        printf("Fail to enable interrupt, %d.\n", status);
+    }
+    
     DMAOperation( VENDOR_ID, DEVICE_ID);
     status = close_pci(hDev);
     if (status != 0) {
         printf("Fail to cloese pci.\n");
     }
+   
 //    PatternFill("model1_480x270.txt", 480, 270);
     /*
     if (!PCI_Get_WD_handle(&hDev)) {
@@ -88,5 +94,5 @@ int main() {
      
 
 
-     close_pci(hDev);
+  //   close_pci(hDev);
 }

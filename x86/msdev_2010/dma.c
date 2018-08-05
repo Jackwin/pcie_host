@@ -7,47 +7,11 @@
 #include "time.h"
 
 WD_DMA *pDMA_memory_space;
-//dma_descriptor dma_dt[128];
-void SetDMADesTable(int num, long dest_addr, long src_addr, int size) {
-    printf("   Set the DMA Descriptor Table for the pattern.\n");
-    printf("The destination addres is %x, size is %d byte.\n", dest_addr, size);
-}
-// Set descriptor table
-BOOL SetDescTable(struct dma_descriptor *dma_desc, DWORD source_addr_high, DWORD source_addr_low, DWORD dest_addr_high, DWORD dest_addr_low, DWORD ctl_dma_len, WORD id) {
-    dma_desc->src_addr_low = source_addr_low;
-    dma_desc->src_addr_high = source_addr_high;
-    dma_desc->dest_addr_low = dest_addr_low;
-    dma_desc->dest_addr_high = dest_addr_high;
-    dma_desc->ctl_dma_len = ctl_dma_len | (id << 18);
-    dma_desc->reserved[0] = 0x0;
-    dma_desc->reserved[1] = 0x0;
-    dma_desc->reserved[2] = 0x0;
-    return 1;
-}
-
-BOOL ConfigDMADescController(WDC_DEVICE_HANDLE hDev, DMA_ADDR desc_table_start_addr, BOOL fromDev) {
-    DWORD dt_phy_addr_h = (desc_table_start_addr >> 32) & 0xffffffff;
-    DWORD dt_phy_addr_l = desc_table_start_addr & 0xffffffff;
-
-    // Move data from CPU to FPGA
-    if (!fromDev) {
-        // Program the address of descriptor table to DMA descriptor controller
-        WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_HIGH_SRC_ADDR, dt_phy_addr_h);
-        WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_RC_LOW_SRC_ADDR, dt_phy_addr_l);
-    }
-    else {
-        WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_RC_HIGH_SRC_ADDR, dt_phy_addr_h);
-        WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_RC_LOW_SRC_ADDR, dt_phy_addr_l);
-    }
-    return TRUE;
-}
-
 
 DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr, WD_DMA **ppDMA_rd_buf, WD_DMA **ppDMA_wr_buf) {
     printf("altera_pcie_dma_bookkeep size is %d.\n", sizeof(struct altera_pcie_dma_bookkeep));
     // bk_ptr = (struct altera_pcie_dma_bookkeep *) malloc(sizeof(struct altera_pcie_dma_bookkeep));
     // DWORD status = WDC_DMASGBufLock(hDev, bk_ptr, DMA_TO_DEVICE, sizeof(struct altera_pcie_dma_bookkeep), ppDma);
-
     PVOID ppBuf;
     DWORD status = WDC_DMAContigBufLock(hDev, &ppBuf, DMA_TO_DEVICE, sizeof(struct altera_pcie_dma_bookkeep), ppDma);
     //ppBuf = (struct altera_pcie_dma_bookkeep *) malloc(sizeof(struct altera_pcie_dma_bookkeep));
@@ -62,9 +26,7 @@ DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr,
 
     set_lite_table_header(&(bk_ptr->lite_table_rd_cpu_virt_addr.header));
     set_lite_table_header(&(bk_ptr->lite_table_wr_cpu_virt_addr.header));
-
     bk_ptr->lite_table_rd_bus_addr = (*ppDma)->Page[0].pPhysicalAddr;
-
     return status;
 
 }
@@ -87,7 +49,6 @@ int *ApplyMemorySpace(int byte_size, DWORD direction) {
     pdata = (int *)ppBuf;
 
     return pdata;
-
 }
 
 int DMAToOnchipMem(DMA_ADDR cpu_memory_start_addr, int byte_size, int fpga_onchip_addr_offset) {
@@ -113,14 +74,11 @@ int DMAToOnchipMem(DMA_ADDR cpu_memory_start_addr, int byte_size, int fpga_onchi
     DWORD dma_dword = (byte_size) / 4; // Dword number
     DMA_ADDR onchip_mem_base_addr = (ONCHIP_MEM_BASE_ADDR_HI << 32) + ONCHIP_MEM_BASE_ADDR_LOW + fpga_onchip_addr_offset;
 
-
     DWORD cpu_mem_addr_h = (cpu_memory_start_addr >> 32) & 0xffffffff;
     DWORD cpu_mem_addr_l = cpu_memory_start_addr & 0xffffffff;
     DWORD onchip_mem_addr_h = (onchip_mem_base_addr >> 32) & 0xffffffff;
     DWORD onchip_mem_addr_l = onchip_mem_base_addr & 0xffffffff;
     SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[0]), cpu_mem_addr_h, cpu_mem_addr_l, onchip_mem_addr_h, onchip_mem_addr_l, dma_dword, 0);
-
-
     status = WDC_DMASyncCpu(pDMA);
     if (WD_STATUS_SUCCESS != status) {
         printf("Fail to CPUSync pDMA.\n");
@@ -129,9 +87,11 @@ int DMAToOnchipMem(DMA_ADDR cpu_memory_start_addr, int byte_size, int fpga_onchi
     WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTRL_HIGH_DEST_ADDR, RD_CTRL_BUF_BASE_HI);
     WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTLR_LOW_DEST_ADDR, RD_CTRL_BUF_BASE_LOW);
 
+    WDC_ReadAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, &last_id);
+    printf("Before DT, last_id is %x.\n", last_id);
+
     last_id = 0;
     WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_TABLE_SIZE, last_id);
-
     WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, last_id);
 
     timeout = TIMEOUT;
@@ -147,10 +107,6 @@ int DMAToOnchipMem(DMA_ADDR cpu_memory_start_addr, int byte_size, int fpga_onchi
             break;
         }
     }
-
-   // WDC_DMASyncIo(pDMA_memory_space);
-    //WDC_DMABufUnlock(pDMA_memory_space);
-
     WDC_DMASyncIo(pDMA);
     WDC_DMABufUnlock(pDMA);
     return 1;
@@ -243,14 +199,11 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
                // int source_data_addr = source_data_ptr + (dt_index * (128 * DMA_SIZE_PER_DESCRIPTOR) + i * DMA_SIZE_PER_DESCRIPTOR) / 4;
                 // Repeat copy the same data. Just as an example
                 int source_data_addr = source_data_ptr + i * byte_per_descriptor / 4;
-                //printf("source data address is %x.\n", source_data_addr);
                 memcpy(pdata, (int *)(source_data_addr), byte_per_descriptor);
-               // printf("pdata[1920*1080/32-1] is %x,  source_data_addr[1920*1080/32-1]is %x.\n", pdata[1920 * 1080 / 32 - 1], source_data_ptr[1920 * 1080 / 32 - 1]);
                 status = WDC_DMASyncCpu(pDMA_rd_buf_array[i]);
                 if (status != WD_STATUS_SUCCESS) {
                     printf("Fail to Sync pDMA_rd_buf_array[%d].\n", i);
                 }
-
                 //  Construct the descriptor table
                 if (pDMA_rd_buf_array[i]->dwPages > 1) {
                     printf("Over-page!! The default page is 1.\n");
@@ -266,10 +219,7 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
                         mem_start_addr = offchip_mem_base_addr;
                     else
                         mem_start_addr = onchip_mem_base_addr;
-
                     current_page_size = pDMA_rd_buf_array[0]->Page[0].dwBytes;
-                 //   printf("current_page_size is %d.\n", current_page_size);
-                   // printf("mem_start_addr is 0x%x.\n", mem_start_addr);
                 }
                 else {
                     // Addr problem??
@@ -283,13 +233,10 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
             DWORD mem_addr_h = (mem_start_addr >> 32) & 0xffffffff;
             DWORD mem_addr_l = mem_start_addr & 0xffffffff;
             DWORD dma_dword = (current_page_size) / 4; // Dword number
-
-           // printf("mem_addr_h is %x, mem_addr_l is %x.\n", mem_addr_h, mem_addr_l);
-           // printf("dma_dword is %d.\n", dma_dword);
+            printf("FPGA addrh is %x, and addrl is %x. CPU addrh is %x, CPU addrl is %x.\n", mem_addr_h, mem_addr_l, rd_buf_phy_addr_h, rd_buf_phy_addr_l);
             SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[i]), rd_buf_phy_addr_h, rd_buf_phy_addr_l, mem_addr_h, mem_addr_l, dma_dword, i);
         }
-       // printf("\n");
-        //printf("Start to DMA. ROUND %d. \n", (dt_index + 1));
+
         status = WDC_DMASyncCpu(pDMA);
             if (WD_STATUS_SUCCESS != status) {
             printf("Fail to CPUSync ppDMA.\n");
@@ -298,18 +245,11 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
         WDC_ReadAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, &last_id);
 
         printf("Before DT, last_id is %x.\n", last_id);
-/*
-        if (last_id == 0xff) {
-            last_id = 127;
-            ConfigDMADescController(hDev, bk_ptr->lite_table_rd_bus_addr, 127, 0);
-            WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTRL_HIGH_DEST_ADDR, RD_CTRL_BUF_BASE_HI);
-            WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTLR_LOW_DEST_ADDR, RD_CTRL_BUF_BASE_LOW);
-        }
- */
+
         ConfigDMADescController(hDev, bk_ptr->lite_table_rd_bus_addr, 0);
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTRL_HIGH_DEST_ADDR, RD_CTRL_BUF_BASE_HI);
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTLR_LOW_DEST_ADDR, RD_CTRL_BUF_BASE_LOW);
-       // last_id = last_id + descriptor_num;
+
         last_id = descriptor_num - 1;
 
         if (last_id > 127) {
@@ -494,6 +434,7 @@ int* FPGA_write_to_CPU(int data_size, int byte_per_descriptor, int fpga_ddr3_add
 
             DWORD fpga_start_addr_h = (fpga_start_addr >> 32) & 0xffffffff;
             DWORD fpga_start_addr_l = fpga_start_addr & 0xffffffff;
+
             DWORD dma_dword = (current_page_size) / 4; // Dword number
             SetDescTable(&(bk_ptr->lite_table_wr_cpu_virt_addr.descriptors[i]), fpga_start_addr_h, fpga_start_addr_l, cpu_start_addr_h, cpu_start_addr_l, dma_dword, i);
         }
@@ -569,14 +510,12 @@ void GeneratePatternData(int pattern_num, char *prefix, char *format, int h_pix,
       char num[6];
       itoa(0, num, 10);
       strcat(pattern_name, num);
-      printf("pattern name is %s.\n", pattern_name);
       strcat(pattern_name, ".");
       strcat(pattern_name, format);
-      //printf("pattern name is %s.\n", pattern_name);
       FILE *fp = OpenPattern(pattern_name, "r");
       // The maximum number of DMA DT is 128, starting from 0 to 127
       int pattern_size = CalcualtePatternSize(fp);
-      printf("pattern_size is %d.\n", pattern_size);
+      printf("pattern ID is %d, pattern name is %s, pattern_size is %d.\n", k, pattern_name, pattern_size);
       CloseFile(fp);
       // One page corresponds to one DMA Descriptor Table
       int page_num = (pattern_size % PAGE_SIZE == 0) ? (pattern_size / PAGE_SIZE) : (pattern_size / PAGE_SIZE + 1);
@@ -606,56 +545,168 @@ void GeneratePatternData(int pattern_num, char *prefix, char *format, int h_pix,
   }
 }
 
+void DMAReadIntHandler(WDC_DEVICE_HANDLE hDev_0, PCI_DRIVER_INT_RESULT *pIntResult) {
+    printf("Interrupt from DMAReadIntHandler.\n");
+    DWORD rd_data;
+    WDC_ReadAddr32(hDev, ALTERA_AD_BAR2, USR_INTR_ADDR, &rd_data);
+    if (rd_data == 1) {
+        printf("User interrrupt.\n");
+        //clear the interrupt register
+        WDC_WriteAddr32(hDev, ALTERA_AD_BAR2, USR_INTR_ADDR, 0);
+    }
+
+}
+
+// Select the section on FPGA DDR3, and the setion ID ranges from 0 to 15.
+BOOL SelectSection(int sectionID) {
+    if (sectionID > 15) {
+        printf("Section ID is beyongd 15.\n");
+        return FALSE;
+    }
+    else WDC_WriteAddr32(hDev, ALTERA_AD_BAR2, SEC_CTRL_ADDR, sectionID * SECTION_SIZE);
+    DWORD rd_data;
+    WDC_ReadAddr32(hDev, ALTERA_AD_BAR2, SEC_CTRL_ADDR, &rd_data);
+    if (rd_data == sectionID * SECTION_SIZE) {
+        printf("Choose section %d successfully.\n", sectionID);
+        return TRUE;
+    }
+    else {
+        printf("Fail to choose section %d.\n", sectionID);
+        return false;
+    }
+}
+
+
+BOOL WriteReg(DWORD addr, DWORD wr_data) {
+    WDC_WriteAddr32(hDev, ALTERA_AD_BAR4, addr, wr_data);
+    DWORD rd_data;
+    WDC_ReadAddr32(hDev, ALTERA_AD_BAR4, addr, &rd_data);
+    if (wr_data != rd_data) {
+        printf("Fail to write data %x to addr %x\n", wr_data, addr);
+        return FALSE;
+    }
+    else
+        return TRUE;
+}
+
+DWORD ReadReg(DWORD addr) {
+    DWORD rd_data;
+    WDC_ReadAddr32(hDev, ALTERA_AD_BAR4, addr, &rd_data);
+    return rd_data;
+}
+
+// configure WPS controller register
+BOOL CfgWPSReg(WPS_REG wps_register) {
+    BOOL status;
+    status = WriteReg(RSV_ADDR, wps_register.rsv_reg);
+    if (!status) return FALSE;
+
+     status = WriteReg(TO_SEND_FRAME_NUM_REG_ADDR, wps_register.to_send_frame_num_reg);
+     if (!status) return FALSE;
+
+     status = WriteReg(ONE_FRAME_BYTE_REG_ADDR, wps_register.one_frame_byte_reg);
+     if (!status) return FALSE;
+
+     status = WriteReg(PATTERN_REG_ADDR, wps_register.pattern_reg);
+     if (!status) return FALSE;
+
+     status = WriteReg(TO_SNED_TOTAL_BYTE_REG_ADDR, wps_register.to_send_total_byte_reg);
+     if (!status) return FALSE;
+
+     status = WriteReg(START_ADDR_REG_ADDR, wps_register.start_addr_reg);
+     if (!status) return FALSE;
+
+     status = WriteReg(CAPTURE_PULSE_CYCLE_REG_ADDR, wps_register.capture_pulse_cycle_reg);
+     if (!status) return FALSE;
+
+     status = WriteReg(START_PLAY_REG_ADDR, wps_register.start_play_reg);
+     if (!status) return FALSE;
+
+     return TRUE;
+}
+
 
 int DMAOperation(DWORD vendor_id, DWORD device_id) {
-    GeneratePatternData(1, "model", "txt", 1920, 1080);
     int status;
-    int read_data;
-    int to_send_frame_num = 100;
+    int to_send_frame_num = 128;
+    GeneratePatternData(to_send_frame_num, "model", "txt", 1920, 1080);
+
     clock_t start, finish;
     double  duration;
 
-   // status = FPGA_read(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * to_send_frame_num, DMA_SIZE_PER_DESCRIPTOR ,0, 0, 0);
+    // Every FPGA DDR3 section can store 256 1920x1080 patterns(frames). Here to get the section number and the left patterns/frames
+    int sec_num = to_send_frame_num % 256 == 0 ? to_send_frame_num / 256 : to_send_frame_num / 256 + 1;
+    int to_send_frame_num_left =  to_send_frame_num % 256;
 
-
-    //status = FPGA_read(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * to_send_frame_num, DMA_SIZE_PER_DESCRIPTOR, 0, 0x20, 1);
+    // By default, the section starts from section 0, corresponding to FPGA DDR3 address 0x0. Every section size is 0x4000000 bytes
+    // The start section can be changed as your wish, but it's better to keep the offet address in the section at 0x00, otherwise it would involves with complicated
+    // control logics in FPGA
+    int start_sec_id = 0;
+    for (int sec_id = 0; sec_id < sec_num; sec_id++) {
+        status =  SelectSection(start_sec_id + sec_id);
+        if (!status){
+            printf("Fail to select section %d.\n", sec_id);
+            return;
+        }
+        if (sec_id == (sec_num - 1)) {
+            if (to_send_frame_num_left == 0)
+                status = FPGA_read(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 256, DMA_SIZE_PER_DESCRIPTOR, 0x0, 0x0, 0);
+            else
+                status = FPGA_read(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * to_send_frame_num_left, DMA_SIZE_PER_DESCRIPTOR, 0x0, 0x0, 0);
+        }
+        else
+            status = FPGA_read(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 256, DMA_SIZE_PER_DESCRIPTOR, 0x0, 0x0, 0);
+    }
 
     WPS_REG wps_register;
     wps_register.rsv_reg = 0xffffeeee;
-    wps_register.capture_pulse_cycle_reg = 3;
-    wps_register.start_addr_reg = ONCHIP_MEM_BASE_ADDR_LOW + 0x20;
-    //wps_register.start_addr_reg = 0x00;
+    wps_register.capture_pulse_cycle_reg = 100;
+    //wps_register.start_addr_reg = ONCHIP_MEM_BASE_ADDR_LOW + 0x20;
+    wps_register.start_addr_reg = DDR_MEM_BASE_ADDR_LOW + SECTION_SIZE * start_sec_id;
     wps_register.to_send_total_byte_reg = to_send_frame_num * 1920 * 1080 / 8;
     wps_register.pattern_reg = (1920 << 16) | 1080;
     wps_register.one_frame_byte_reg = 1920 * 1080 / 8;
     wps_register.to_send_frame_num_reg = to_send_frame_num;
-    wps_register.start_play_reg = (1 << 31 | 1 << 30);
-   // wps_register.start_play_reg = (1 << 31);
+    // wps_register.start_play_reg = (1 << 31 | 1 << 30);
+    wps_register.start_play_reg = (1 << 31);
+    status = CfgWPSReg(wps_register);
+    if (!status) printf("Configure WPS REG fails.\n");
 
+    //while(1);
+
+
+    /*
     int *pdata;
     start = clock();
+    // The applied maximum contiguous physical memory address is not clear until now. In the test, if to_send_frame_num is larger than 1000, it fails sometimes.
     pdata = ApplyMemorySpace(sizeof(DMD_PATTERN) * to_send_frame_num,DMA_TO_DEVICE);
-    
+
     for (int k = 0; k < to_send_frame_num; k++)
         memcpy((pdata + sizeof(DMD_PATTERN) * k / 4), (int *) dmd_pattern_data, sizeof(DMD_PATTERN));
-    
     DMA_ADDR cpu_memory_start_addr = pDMA_memory_space->Page[0].pPhysicalAddr;
+    DMA_ADDR cpu_memory_addr;
     start = clock();
-    for (int k = 0; k < to_send_frame_num; k++) {
-         cpu_memory_start_addr = cpu_memory_start_addr + k * sizeof(DMD_PATTERN);
-         DMAToOnchipMem(cpu_memory_start_addr, sizeof(DMD_PATTERN), 0x20);
-       //  status = FPGA_read(vendor_id, device_id, (int *)(&wps_register), sizeof(WPS_REG), sizeof(WPS_REG), 0, 0, 1);
+
+    for (int j = 0; j < 100; j++) {
+        for (int k = 0; k < to_send_frame_num; k++) {
+
+            printf("(j,k) is %d,%d.\n", j, k);
+            printf("cpu_memory address is %lx.\n", cpu_memory_start_addr);
+            cpu_memory_addr = cpu_memory_start_addr + k * sizeof(DMD_PATTERN);
+            DMAToOnchipMem(cpu_memory_addr, sizeof(DMD_PATTERN), 0x20);
+            // delay is inserted to ensure the WPS send is done
+            //for (int delay = 10000; delay > 0; delay--);
+            status = FPGA_read(vendor_id, device_id, (int *)(&wps_register), sizeof(WPS_REG), sizeof(WPS_REG), 0, 0, 1);
+        }
     }
-    
+
+    WDC_DMASyncIo(pDMA_memory_space);
     WDC_DMABufUnlock(pDMA_memory_space);
-   // free(pDMA_memory_space);
-    //);
-    //for (int k = 0; k < to_send_frame_num; k++)
-       // memcpy((pdata + (sizeof(DMD_PATTERN)/ 4 * k)), (int *)(dmd_pattern_data), sizeof(DMD_PATTERN));
+
     finish = clock();
     duration = (double)(finish - start) / CLOCKS_PER_SEC;
     printf("%f seconds\n", duration);
-
+    */
 
     //for (int k = 0; k < to_send_frame_num; k++) {
        // DMAToOnchipMem(cpu_start_mem_addr, sizeof(DMD_PATTERN), 0x20);

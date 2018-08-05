@@ -29,7 +29,7 @@ extern "C" {
 
 //------------------------- Altera DMA parameters ------------------------------------------
 #define ALTERA_DMA_BAR_NUM (6)
-#define ALTERA_DMA_DESCRIPTOR_NUM 125
+#define ALTERA_DMA_DESCRIPTOR_NUM 128
 
 #define ALTERA_DMA_WR_DMA_CTRL          0x0000
 #define ALTERA_DMA_WR_DESC_STATUS       0x0004
@@ -70,11 +70,10 @@ extern "C" {
 
 // On-chip 4KB FIFO 0x0000_0000_0800_0000 - 0x0000_0000_0800_ffff
 #define ONCHIP_MEM_BASE_ADDR_HI         0x00000000
-#define ONCHIP_MEM_BASE_ADDR_LOW        0x10000000
+#define ONCHIP_MEM_BASE_ADDR_LOW        0x04000000
 #define ONCHIP_MEM_DESC_MEM_BASE        0x0000
 #define ONCHIP_MEM_SIZE                 (1 << 18)  //256K
 
-//DDR3 128MB 0x0000_0000_0000_0000 - 0x0000_0000_07ff_ffff
 #define DDR_MEM_BASE_ADDR_HI            0x00000000
 #define DDR_MEM_BASE_ADDR_LOW           0x00000000
 #define RD_CTRL_BUF_BASE_LOW            0x80000000
@@ -208,6 +207,7 @@ WDC_DEVICE_HANDLE PCI_DRIVER_DeviceOpen(const WD_PCI_CARD_INFO *pDeviceInfo);
 BOOL PCI_DRIVER_DeviceClose (WDC_DEVICE_HANDLE hDev);
 //DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr,WD_DMA **ppDMA_rd_buf, WD_DMA **ppDMA_wr_buf);
 typedef void (DLLCALLCONV *ALTERA_INT_HANDLER)( ALTERA_HANDLE hALTERA, ALTERA_INT_RESULT *intResult);
+
 /*
 BOOL ALTERA_Open (ALTERA_HANDLE *phALTERA, DWORD dwVendorID, DWORD dwDeviceID, DWORD nCardNum);
 void ALTERA_Close(ALTERA_HANDLE hALTERA);
@@ -240,7 +240,7 @@ void ALTERA_IntDisable (ALTERA_HANDLE hALTERA);
 //WORD init_ep_mem(ALTERA_HANDLE hALTERA, DWORD mem_byte_offset, DWORD num_dwords, BYTE increment);
 WORD init_rp_mem(DWORD *rp_buffer_virt_addr, DWORD num_dword);
 int set_lite_table_header(struct lite_dma_header *header);
-
+DWORD close_pci(WDC_DEVICE_HANDLE hDev);
 //BOOL SetDMADescController(ALTERA_HANDLE phAltera, struct dma_descriptor *dma_desc_table_ptr, BOOL fromDev);
 //BOOL ConfigDMADescController(WDC_DEVICE_HANDLE hDev, DMA_ADDR desc_table_start_addr, BOOL fromDev);
 //BOOL SetDescTable(struct dma_descriptor *dma_desc, DWORD source_addr_high, DWORD source_addr_low, DWORD dest_addr_high, DWORD dest_addr_low, DWORD ctl_dma_len, WORD id);
@@ -250,6 +250,8 @@ DWORD ApplyPhysicalAddress(WD_DMA *pDMA, BOOL bfrom_dev, DMA_BUFFER *DMA_buf);
 //BOOL ALTERA_ContinueDMALock(ALTERA_HANDLE hALTERA, PVOID pBuffer, DWORD dwBytes, BOOL fFromDev, WD_DMA *pDma);
 // this string is set to an error message, if one occurs
 extern CHAR ALTERA_ErrorString[];
+
+BOOL SetDescTable(struct dma_descriptor *dma_desc, DWORD source_addr_high, DWORD source_addr_low, DWORD dest_addr_high, DWORD dest_addr_low, DWORD ctl_dma_len, WORD id);
 
 
 enum {
