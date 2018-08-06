@@ -141,9 +141,33 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
     int flag = 0;
     int *pdata;
     int table_size = 0;
+
+    int dt_head = 0; // From the current last_id to DT ID 127
+    int dt_body = 0; // multiples of 128 DTs
+    int dt_tail = 0; // The left DTs
+
+    //
     // Total descriptor number
     int total_descriptor_num = (data_size % byte_per_descriptor == 0) ? (data_size / byte_per_descriptor) : (data_size / byte_per_descriptor + 1);
     int last_descriptor_dma_size = data_size - (total_descriptor_num - 1) * byte_per_descriptor;
+
+     //
+    WDC_ReadAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, &last_id);
+    if (last_id == 0xff || last_id == 127)
+            last_id = - 1;
+    if (last_id + total_descriptor_num > 127) {
+        dt_head = 127 - last_id;
+        dt_body = (total_descriptor_num - dt_head) / 128;
+        dt_tail = (total_descriptor_num - dt_head - dt_body * 128) / 128;
+    }
+    else {
+        dt_head = total_descriptor_num;
+        dt_body = 0;
+        dt_tail = 0;
+    }
+
+    // Set the DT from last_id and continue to dt_tail
+
     int dt_num = (total_descriptor_num % 128 == 0) ? (total_descriptor_num / 128) : (total_descriptor_num / 128 + 1);
     int last_dt_descriptor_num = (total_descriptor_num % 128 == 0) ? 128 : (total_descriptor_num % 128) ;
 
@@ -182,8 +206,10 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
         int descriptor_num;
         if (dt_index != (dt_num - 1)) descriptor_num = 128;
         else descriptor_num = last_dt_descriptor_num;
+
         //Apply for continuous memory space for pattern data
-        for (int i = 0; i < 128; i++) {
+        for (int i = 0; i < 8; i++) {
+       // for (int i = 0; i < descriptor_num; i++) {
             DWORD rd_buf_phy_addr_h, rd_buf_phy_addr_l;
             // Actual descriptors
             if (i < descriptor_num) {
@@ -198,7 +224,9 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
                 // Change to int address
                // int source_data_addr = source_data_ptr + (dt_index * (128 * DMA_SIZE_PER_DESCRIPTOR) + i * DMA_SIZE_PER_DESCRIPTOR) / 4;
                 // Repeat copy the same data. Just as an example
+
                 int source_data_addr = source_data_ptr + i * byte_per_descriptor / 4;
+
                 memcpy(pdata, (int *)(source_data_addr), byte_per_descriptor);
                 status = WDC_DMASyncCpu(pDMA_rd_buf_array[i]);
                 if (status != WD_STATUS_SUCCESS) {
@@ -213,6 +241,7 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
                 // CPU memory physical address
                 rd_buf_phy_addr_h = (pDMA_rd_buf_array[i]->Page[0].pPhysicalAddr >> 32) & 0xffffffff;
                 rd_buf_phy_addr_l = (pDMA_rd_buf_array[i]->Page[0].pPhysicalAddr) & 0xffffffff;
+
 
                 if (i == 0 && dt_index == 0) {
                     if (target == 0)
@@ -244,30 +273,40 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
 
         WDC_ReadAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, &last_id);
 
-        printf("Before DT, last_id is %x.\n", last_id);
+        printf("The original last_id is %d.\n", last_id);
 
         ConfigDMADescController(hDev, bk_ptr->lite_table_rd_bus_addr, 0);
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTRL_HIGH_DEST_ADDR, RD_CTRL_BUF_BASE_HI);
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTLR_LOW_DEST_ADDR, RD_CTRL_BUF_BASE_LOW);
 
-        last_id = descriptor_num - 1;
 
+        if (last_id == 0xff || last_id == 127)
+            last_id = descriptor_num - 1;
+        else
+            last_id = last_id + descriptor_num ;
+
+       // last_id = descriptor_num - 1;
+        printf("descriptor_num is %x.\n", descriptor_num);
         if (last_id > 127) {
             last_id = last_id - 128;
             //if ((ppDMA1_rd_buf->dwPages > 1) && (last_id != 127)) write_127 = 1;
             if (descriptor_num > 1 && last_id != 127) {
                 write_127 = 1;
-                table_size = last_id;
+                //table_size = 127;
             }
         }
+       // else
+        table_size = last_id;
 
-        WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_TABLE_SIZE, last_id);
-        printf("Set table size is %d.\n", (last_id ));
+       // WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_TABLE_SIZE, last_id);
+          WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_TABLE_SIZE, table_size);
+      //  printf("Table size is %d.\n", table_size );
         if (write_127) {
             //WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_TABLE_SIZE, (last_id + descriptor_num - 1));
             WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, 127);
         }
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, last_id);
+        //WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, 0);
         printf("Last_id is %d.\n", last_id);
         timeout = TIMEOUT;
 
@@ -628,7 +667,7 @@ BOOL CfgWPSReg(WPS_REG wps_register) {
 
 int DMAOperation(DWORD vendor_id, DWORD device_id) {
     int status;
-    int to_send_frame_num = 128;
+    int to_send_frame_num = 1;
     GeneratePatternData(to_send_frame_num, "model", "txt", 1920, 1080);
 
     clock_t start, finish;
