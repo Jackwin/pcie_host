@@ -142,22 +142,25 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
     int table_size = 0;
     int fisrt_dt_descriptor; // The first descriptor in DT
     int last_dt_descriptor;
-
+    DWORD mem_addr_h;
+    DWORD mem_addr_l;
+    DWORD dma_dword;
+    DWORD rd_buf_phy_addr_h, rd_buf_phy_addr_l;
 
     // Total descriptor number
     int total_descriptor_num = (data_size % byte_per_descriptor == 0) ? (data_size / byte_per_descriptor) : (data_size / byte_per_descriptor + 1);
-  //  int last_descriptor_dma_size = data_size - (total_descriptor_num - 1) * byte_per_descriptor;
 
     if (total_descriptor_num > 128) {
         printf(" \033[40;31m The descriptor number is over the maximum 128.\033[0m \n"); // black back-groud and red characters
         exit(0);
     }
+/*
     WDC_ReadAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, &last_id);
-    if (last_id == 0xff || last_id == 127)
+    if (last_id == 0xff || last_id == MAX_TABLE_SIZE)
             last_id = - 1;
-    if (last_id + total_descriptor_num > 127) {
+    if (last_id + total_descriptor_num > MAX_TABLE_SIZE) {
         fisrt_dt_descriptor = last_id + 1;
-        last_id = last_id + total_descriptor_num - 128;
+        last_id = last_id + total_descriptor_num - MAX_TABLE_SIZE - 1;
         write_127 = 1;
     }
     else {
@@ -168,7 +171,7 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
     last_dt_descriptor = last_id;
 
     printf(" The total descriptor number is %d, the first descriptor is %d, the last_descriptor is %d.\n", total_descriptor_num, fisrt_dt_descriptor, last_dt_descriptor);
-
+*/
     DMA_ADDR offchip_mem_base_addr = (DDR_MEM_BASE_ADDR_HI << 32) + DDR_MEM_BASE_ADDR_LOW + fpga_ddr3_addr_offset;
     DMA_ADDR offchip_mem_start_addr;
 
@@ -198,86 +201,74 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
     bk_ptr->lite_table_rd_bus_addr = pDMA->Page[0].pPhysicalAddr;
 
     //-------------------------Move data from CPU memory to FPGA--------------------------------------------
-    for (int k = 0; k < total_descriptor_num; k++) {
-        int dt_index = k + fisrt_dt_descriptor;
-        if (dt_index > 127) dt_index = dt_index - 128;
+    for (int dt_index = 0; dt_index < 128; dt_index++) {
+        if (dt_index < total_descriptor_num) {
+            //---------------------------------------------------------------------------------------------------
+            status = WDC_DMAContigBufLock(hDev, &ppBuf_array[dt_index], DMA_TO_DEVICE, byte_per_descriptor, &pDMA_rd_buf_array[dt_index]);
+            pdata = (int *)ppBuf_array[dt_index];
+            if (status != WD_STATUS_SUCCESS) {
+                printf("Fail to initiate DMAContigBuf for dmd_pattern.\n");
+                printf("status is %x.\n", status);
+            }
 
-        //---------------------------------------------------------------------------------------------------
-        DWORD rd_buf_phy_addr_h, rd_buf_phy_addr_l;
-        status = WDC_DMAContigBufLock(hDev, &ppBuf_array[dt_index], DMA_TO_DEVICE, byte_per_descriptor, &pDMA_rd_buf_array[dt_index]);
+            int source_data_addr = source_data_ptr + dt_index * byte_per_descriptor / 4;
+            memcpy(pdata, (int *)(source_data_addr), byte_per_descriptor);
+            status = WDC_DMASyncCpu(pDMA_rd_buf_array[dt_index]);
+            if (status != WD_STATUS_SUCCESS) {
+                printf("Fail to Sync pDMA_rd_buf_array[%d].\n", dt_index);
+            }
+            //  Construct the descriptor table
+            if (pDMA_rd_buf_array[dt_index]->dwPages > 1) {
+                printf("Over-page!! The default page is 1.\n");
+            }
 
-        //ppBuf = (struct altera_pcie_dma_bookkeep *) malloc(sizeof(struct altera_pcie_dma_bookkeep));
-        pdata = (int *)ppBuf_array[dt_index];
-        if (status != WD_STATUS_SUCCESS) {
-            printf("Fail to initiate DMAContigBuf for dmd_pattern.\n");
-            printf("status is %x.\n", status);
+            // CPU memory physical address
+            rd_buf_phy_addr_h = (pDMA_rd_buf_array[dt_index]->Page[0].pPhysicalAddr >> 32) & 0xffffffff;
+            rd_buf_phy_addr_l = (pDMA_rd_buf_array[dt_index]->Page[0].pPhysicalAddr) & 0xffffffff;
+
+            if (dt_index == 0) {
+                if (target == 0)
+                    mem_start_addr = offchip_mem_base_addr;
+                else
+                    mem_start_addr = onchip_mem_base_addr;
+                current_page_size = pDMA_rd_buf_array[dt_index]->Page[0].dwBytes;
+            }
+            else {
+                mem_start_addr = mem_start_addr + pre_page_size;
+                current_page_size = pDMA_rd_buf_array[dt_index]->Page[0].dwBytes;
+            }
+            pre_page_size = current_page_size ;
+
+            mem_addr_h = (mem_start_addr >> 32) & 0xffffffff;
+            mem_addr_l = mem_start_addr & 0xffffffff;
+            dma_dword = (current_page_size) / 4; // Dword number
+            printf("FPGA addrh is %x, and addrl is %x. CPU addrh is %x, CPU addrl is %x.\n", mem_addr_h, mem_addr_l, rd_buf_phy_addr_h, rd_buf_phy_addr_l);
+            printf("Set descriptor %d.\n", dt_index);
+            SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[dt_index]), rd_buf_phy_addr_h, rd_buf_phy_addr_l, mem_addr_h, mem_addr_l, dma_dword, dt_index);
+            }
+            else {
+                SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[dt_index]), rd_buf_phy_addr_h, rd_buf_phy_addr_l, mem_addr_h, mem_addr_l, dma_dword, dt_index);
+            }
         }
 
-        int source_data_addr = source_data_ptr + k * byte_per_descriptor / 4;
-
-        memcpy(pdata, (int *)(source_data_addr), byte_per_descriptor);
-        status = WDC_DMASyncCpu(pDMA_rd_buf_array[dt_index]);
-        if (status != WD_STATUS_SUCCESS) {
-            printf("Fail to Sync pDMA_rd_buf_array[%d].\n", dt_index);
-        }
-        //  Construct the descriptor table
-        if (pDMA_rd_buf_array[dt_index]->dwPages > 1) {
-            printf("Over-page!! The default page is 1.\n");
-         //   break;
-        }
-
-        // CPU memory physical address
-        rd_buf_phy_addr_h = (pDMA_rd_buf_array[dt_index]->Page[0].pPhysicalAddr >> 32) & 0xffffffff;
-        rd_buf_phy_addr_l = (pDMA_rd_buf_array[dt_index]->Page[0].pPhysicalAddr) & 0xffffffff;
-
-
-        if (k == 0) {
-            if (target == 0)
-                mem_start_addr = offchip_mem_base_addr;
-            else
-                mem_start_addr = onchip_mem_base_addr;
-            current_page_size = pDMA_rd_buf_array[dt_index]->Page[0].dwBytes;
-        }
-        else {
-            // Addr problem??
-            mem_start_addr = mem_start_addr + pre_page_size;
-          //  printf("mem_start_addr is %x.\n", mem_start_addr);
-            current_page_size = pDMA_rd_buf_array[dt_index]->Page[0].dwBytes;
-        }
-        pre_page_size = current_page_size ;
-
-
-        DWORD mem_addr_h = (mem_start_addr >> 32) & 0xffffffff;
-        DWORD mem_addr_l = mem_start_addr & 0xffffffff;
-        DWORD dma_dword = (current_page_size) / 4; // Dword number
-        printf("FPGA addrh is %x, and addrl is %x. CPU addrh is %x, CPU addrl is %x.\n", mem_addr_h, mem_addr_l, rd_buf_phy_addr_h, rd_buf_phy_addr_l);
-        SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[dt_index]), rd_buf_phy_addr_h, rd_buf_phy_addr_l, mem_addr_h, mem_addr_l, dma_dword, dt_index);
-        }
 
         status = WDC_DMASyncCpu(pDMA);
             if (WD_STATUS_SUCCESS != status) {
             printf("Fail to CPUSync ppDMA.\n");
         }
 
-        WDC_ReadAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, &last_id);
-
-        printf("The original last_id is %d.\n", last_id);
-
         ConfigDMADescController(hDev, bk_ptr->lite_table_rd_bus_addr, 0);
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTRL_HIGH_DEST_ADDR, RD_CTRL_BUF_BASE_HI);
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_CTLR_LOW_DEST_ADDR, RD_CTRL_BUF_BASE_LOW);
 
-        table_size = last_id;
-
-      //  printf("Table size is %d.\n", table_size );
         if (write_127) {
-            WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_TABLE_SIZE, 127);
-            WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, 127);
+           // WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_TABLE_SIZE, 127);
+            WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, MAX_TABLE_SIZE);
         }
-        else {
-             WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_TABLE_SIZE, table_size);
-        }
-
+        //else {
+        //     WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_TABLE_SIZE, table_size);
+       // }
+        last_id = 127;
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, last_id);
 
         printf("Last_id is %d.\n", last_id);
@@ -297,9 +288,9 @@ int FPGA_read(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int data_s
             }
         }
 
-        for (int m = 0; m < descriptor_num; m++) {
-            int dt_index = k + fisrt_dt_descriptor;
-            if (dt_index > 127) dt_index = dt_index - 128;
+        for (int m = 0; m < total_descriptor_num; m++) {
+            int dt_index = m + fisrt_dt_descriptor;
+            if (dt_index > MAX_TABLE_SIZE) dt_index = dt_index - MAX_TABLE_SIZE - 1;
 
             WDC_DMASyncIo(pDMA_rd_buf_array[dt_index]);
             WDC_DMABufUnlock(pDMA_rd_buf_array[dt_index]);
@@ -627,20 +618,33 @@ BOOL CfgWPSReg(WPS_REG wps_register) {
 
 int DMAOperation(DWORD vendor_id, DWORD device_id) {
     int status;
-    int to_send_frame_num = 1;
+    int to_send_frame_num = 259;
     GeneratePatternData(to_send_frame_num, "model", "txt", 1920, 1080);
 
     clock_t start, finish;
     double  duration;
+    int start_sec_id = 0;
 
     // Every FPGA DDR3 section can store 256 1920x1080 patterns(frames). Here to get the section number and the left patterns/frames
     int sec_num = to_send_frame_num % 256 == 0 ? to_send_frame_num / 256 : to_send_frame_num / 256 + 1;
     int to_send_frame_num_left =  to_send_frame_num % 256;
 
+    WPS_REG wps_register;
+    wps_register.rsv_reg = 0xffffeeee;
+    wps_register.capture_pulse_cycle_reg = 100;
+    //wps_register.start_addr_reg = ONCHIP_MEM_BASE_ADDR_LOW + 0x20;
+    wps_register.start_addr_reg = DDR_MEM_BASE_ADDR_LOW + SECTION_SIZE * start_sec_id;
+    wps_register.to_send_total_byte_reg = to_send_frame_num * 1920 * 1080 / 8;
+    wps_register.pattern_reg = (1920 << 16) | 1080;
+    wps_register.one_frame_byte_reg = 1920 * 1080 / 8;
+    wps_register.to_send_frame_num_reg = to_send_frame_num;
+    // wps_register.start_play_reg = (1 << 31 | 1 << 30);
+    wps_register.start_play_reg = (1 << 31);
+
     // By default, the section starts from section 0, corresponding to FPGA DDR3 address 0x0. Every section size is 0x4000000 bytes
     // The start section can be changed as your wish, but it's better to keep the offet address in the section at 0x00, otherwise it would involves with complicated
     // control logics in FPGA
-    int start_sec_id = 0;
+
     for (int sec_id = 0; sec_id < sec_num; sec_id++) {
         DWORD addr_offset = 0;
         status =  SelectSection(start_sec_id + sec_id);
@@ -656,7 +660,8 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
             }
             else if (to_send_frame_num_left > 128) {
                 status = FPGA_read(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, 0x0, 0x0, 0);
-                addr_offset = (to_send_frame_num_left - 128) * wps_register.one_frame_byte_reg;
+                //addr_offset = (to_send_frame_num_left - 128) * wps_register.one_frame_byte_reg;
+                addr_offset = 128 * wps_register.one_frame_byte_reg;
                 status = FPGA_read(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * (to_send_frame_num_left - 128), DMA_SIZE_PER_DESCRIPTOR, addr_offset, 0x0, 0);
             }
             else
@@ -669,17 +674,7 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
         }
     }
 
-    WPS_REG wps_register;
-    wps_register.rsv_reg = 0xffffeeee;
-    wps_register.capture_pulse_cycle_reg = 100;
-    //wps_register.start_addr_reg = ONCHIP_MEM_BASE_ADDR_LOW + 0x20;
-    wps_register.start_addr_reg = DDR_MEM_BASE_ADDR_LOW + SECTION_SIZE * start_sec_id;
-    wps_register.to_send_total_byte_reg = to_send_frame_num * 1920 * 1080 / 8;
-    wps_register.pattern_reg = (1920 << 16) | 1080;
-    wps_register.one_frame_byte_reg = 1920 * 1080 / 8;
-    wps_register.to_send_frame_num_reg = to_send_frame_num;
-    // wps_register.start_play_reg = (1 << 31 | 1 << 30);
-    wps_register.start_play_reg = (1 << 31);
+
     status = CfgWPSReg(wps_register);
     if (!status) printf("Configure WPS REG fails.\n");
 

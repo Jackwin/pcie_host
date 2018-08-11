@@ -25,6 +25,8 @@
 // Section controller address
 #define     SEC_CTRL_ADDR 0x0
 #define     USR_INTR_ADDR 0x40
+
+#define     MAX_TABLE_SIZE 127
 typedef struct {
 
     int start_play_reg;
