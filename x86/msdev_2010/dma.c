@@ -154,7 +154,7 @@ int FPGAReadFromCPU(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int 
         printf(" \033[40;31m The descriptor number is over the maximum 128.\033[0m \n"); // black back-groud and red characters
         exit(0);
     }
-/*
+
     WDC_ReadAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, &last_id);
     if (last_id == 0xff || last_id == 127)
             last_id = - 1;
@@ -177,7 +177,7 @@ int FPGAReadFromCPU(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int 
     }
 
     printf(" The total descriptor number is %d, the first descriptor is %d, the last_descriptor is %d.\n", total_descriptor_num, fisrt_dt_descriptor, last_dt_descriptor);
-*/
+
     DMA_ADDR offchip_mem_base_addr = (DDR_MEM_BASE_ADDR_HI << 32) + DDR_MEM_BASE_ADDR_LOW + fpga_ddr3_addr_offset;
     DMA_ADDR offchip_mem_start_addr;
 
@@ -207,9 +207,9 @@ int FPGAReadFromCPU(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int 
     bk_ptr->lite_table_rd_bus_addr = pDMA->Page[0].pPhysicalAddr;
 
     //-------------------------Move data from CPU memory to FPGA--------------------------------------------
-    for (int dt_index = 0; dt_index < 128; dt_index++) {
+    for (int dt_index = 0; dt_index < total_descriptor_num; dt_index++) {
     //for (int dt_index = fisrt_dt_descriptor; dt_index <= last_dt_descriptor; dt_index++) {
-        if (dt_index < total_descriptor_num) {
+        //if (dt_index < total_descriptor_num) {
             //---------------------------------------------------------------------------------------------------
 
             status = WDC_DMAContigBufLock(hDev, &ppBuf_array[dt_index], DMA_TO_DEVICE, byte_per_descriptor, &pDMA_rd_buf_array[dt_index]);
@@ -234,7 +234,7 @@ int FPGAReadFromCPU(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int 
             rd_buf_phy_addr_h = (pDMA_rd_buf_array[dt_index]->Page[0].pPhysicalAddr >> 32) & 0xffffffff;
             rd_buf_phy_addr_l = (pDMA_rd_buf_array[dt_index]->Page[0].pPhysicalAddr) & 0xffffffff;
 
-            if ((dt_index - fisrt_dt_descriptor) == 0) {
+            if (dt_index == 0) {
                 if (target == 0)
                     mem_start_addr = offchip_mem_base_addr;
                 else
@@ -253,10 +253,10 @@ int FPGAReadFromCPU(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int 
             printf("FPGA addrh is %x, and addrl is %x. CPU addrh is %x, CPU addrl is %x.\n", mem_addr_h, mem_addr_l, rd_buf_phy_addr_h, rd_buf_phy_addr_l);
             printf("Set descriptor %d.\n", dt_index);
             SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[dt_index]), rd_buf_phy_addr_h, rd_buf_phy_addr_l, mem_addr_h, mem_addr_l, dma_dword, dt_index);
-        }
-        else {
-                SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[dt_index]), rd_buf_phy_addr_h, rd_buf_phy_addr_l, mem_addr_h, mem_addr_l, dma_dword, dt_index);
-        }
+       // }
+       // else {
+       //         SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[dt_index]), rd_buf_phy_addr_h, rd_buf_phy_addr_l, mem_addr_h, mem_addr_l, dma_dword, dt_index);
+       // }
     }
 
         status = WDC_DMASyncCpu(pDMA);
@@ -276,7 +276,8 @@ int FPGAReadFromCPU(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int 
         //else {
         //     WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_TABLE_SIZE, table_size);
        // }
-        last_id = 127;
+        last_id = total_descriptor_num - 1;
+        WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_TABLE_SIZE, last_id);
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, last_id);
 
         printf("Last_id is %d.\n", last_id);
@@ -296,9 +297,7 @@ int FPGAReadFromCPU(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int 
             }
         }
 
-        for (int m = 0; m < total_descriptor_num; m++) {
-            int dt_index = m + fisrt_dt_descriptor;
-            if (dt_index > MAX_TABLE_SIZE) dt_index = dt_index - MAX_TABLE_SIZE - 1;
+        for (int dt_index = 0; dt_index < total_descriptor_num; dt_index++) {
 
             WDC_DMASyncIo(pDMA_rd_buf_array[dt_index]);
             WDC_DMABufUnlock(pDMA_rd_buf_array[dt_index]);
@@ -321,6 +320,7 @@ Func name: FPGAWriteToCPU()
 Func: FPGA writes data to CPU
 param:
         data_size: the size of the to-be-read data in byte, which should be the multiples of 4-byte
+                    The data_size cannot be too large. If the DMAWritetoCPU fails, try a smller data_size
         byte_per_descriptor: the data size in one descriptor
         fpga_ddr3_addr_offset: the offset address. The starting addres in FPGA ddr3 is 0
         fpga_onchip_addr_offset:
@@ -652,8 +652,8 @@ BOOL CfgWPSReg(WPS_REG wps_register) {
 
 int DMAOperation(DWORD vendor_id, DWORD device_id) {
     int status;
-    int to_send_frame_num = 20;
-
+    int to_send_frame_num = 128;
+/*
     GeneratePatternData(to_send_frame_num, "model", "txt", 1920, 1080);
 
     clock_t start, finish;
