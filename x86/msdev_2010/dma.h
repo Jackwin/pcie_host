@@ -24,6 +24,7 @@
 #define     SECTION_SIZE 0x4000000
 // Section controller address
 #define     SEC_CTRL_ADDR 0x0
+#define     WPS_INTR_ADDR 0x30
 #define     USR_INTR_ADDR 0x40
 
 #define     MAX_TABLE_SIZE 127
@@ -47,7 +48,7 @@ int* FPGAWriteToCPU(int data_size, int byte_per_descriptor, int fpga_ddr3_addr_o
 int DMAOperation(DWORD vendor_id, DWORD device_id);
 int *ApplyMemorySpace(int byte_size, DWORD direction);
 int DMAToOnchipMem(DMA_ADDR cpu_memory_start_addr, int byte_size, int fpga_onchip_addr_offset);
-void DMAReadIntHandler(WDC_DEVICE_HANDLE hDev_0, PCI_DRIVER_INT_RESULT *pIntResult);
+void IntHandler(WDC_DEVICE_HANDLE hDev_0, PCI_DRIVER_INT_RESULT *pIntResult);
 //void ApplyMemorySpace(DMD_PATTERN * source_data_ptr, int byte_size, DWORD direction);
 //int DMAToOnchipMem(int byte_size, int fpga_onchip_addr_offset);
 BOOL SelectSection(int sectionID);

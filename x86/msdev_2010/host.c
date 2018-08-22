@@ -46,7 +46,7 @@ int main() {
    // printf("%d Altera cards found.\n", card_num);
     printf("ALTERA diagnostic utility.\n");
     printf("Application accesses hardware using " WD_PROD_NAME ".\n");
-  
+
     /*     DWORD status = ALTERA_DMABlock(hALTERA,FALSE, VENDOR_ID, DEVICE_ID);
      if (!status) {
          printf("Fail to Read Altera Device.\n");
@@ -61,20 +61,20 @@ int main() {
     // WD_Close(hDev);
     int status = initialize_PCI(VENDOR_ID, DEVICE_ID);
     if (status != WD_STATUS_SUCCESS) {
-        printf("Fail to initialize PCI, %d.\n", status);
+        printf("Fail to initialize PCI, %x.\n", status);
     }
-    
-    status = PCI_DRIVER_IntEnable(hDev, DMAReadIntHandler);
+
+    status = PCI_DRIVER_IntEnable(hDev, IntHandler);
     if (status != WD_STATUS_SUCCESS) {
-        printf("Fail to enable interrupt, %d.\n", status);
+        printf("Fail to enable interrupt, %x.\n", status);
     }
-    
+
     DMAOperation( VENDOR_ID, DEVICE_ID);
     status = close_pci(hDev);
     if (status != 0) {
         printf("Fail to cloese pci.\n");
     }
-   
+
 //    PatternFill("model1_480x270.txt", 480, 270);
     /*
     if (!PCI_Get_WD_handle(&hDev)) {
@@ -91,7 +91,7 @@ int main() {
 
     //WDC_ReadAddr32(hDev, ALTERA_AD_BAR4, 0x60, &read_data);
     //printf("Read_data from Address 0x60 is %x.\n", read_data);
-     
+
 
 
   //   close_pci(hDev);

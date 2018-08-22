@@ -15,7 +15,7 @@ Signature="$CHICAGO$"  ; Represents all Windows OS's
 Provider=%jun%
 ; For WHQL, you should obtain a catalog signed by Microsoft Hardware Compatibility Labs
 ; CatalogFile=wd1021.cat
-DriverVer=08/01/2018, 10.2.1
+DriverVer=08/22/2018, 10.2.1
 
 ; Select an appropriate class for the device.
 ; There are several options:

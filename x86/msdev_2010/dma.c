@@ -181,7 +181,7 @@ int FPGAReadFromCPU(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int 
         last_dt_descriptor = last_id;
     }
 
-    printf(" The total descriptor number is %d, the first descriptor is %d, the last_descriptor is %d.\n", total_descriptor_num, fisrt_dt_descriptor, last_dt_descriptor);
+   // printf(" The total descriptor number is %d, the first descriptor is %d, the last_descriptor is %d.\n", total_descriptor_num, fisrt_dt_descriptor, last_dt_descriptor);
 
     DMA_ADDR offchip_mem_base_addr = (DDR_MEM_BASE_ADDR_HI << 32) + DDR_MEM_BASE_ADDR_LOW + fpga_ddr3_addr_offset;
     DMA_ADDR offchip_mem_start_addr;
@@ -350,7 +350,7 @@ int* FPGAWriteToCPU(int data_size, int byte_per_descriptor, int fpga_ddr3_addr_o
         exit(0);
     }
 
-    printf("total descriptor number is %d, last_descriptor dma size is %d,.\n", total_descriptor_num, last_descriptor_dma_size);
+   // printf("total descriptor number is %d, last_descriptor dma size is %d,.\n", total_descriptor_num, last_descriptor_dma_size);
 
     WDC_ReadAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_WR_LAST_PTR, &last_id);
     printf("Before DT, the last write descriptor id is %x.\n", last_id);
@@ -537,15 +537,23 @@ void GeneratePatternData(int pattern_num, char *prefix, char *format, int h_pix,
   }
 }
 
-void DMAReadIntHandler(WDC_DEVICE_HANDLE hDev_0, PCI_DRIVER_INT_RESULT *pIntResult) {
-    printf("Interrupt from DMAReadIntHandler.\n");
-    DWORD rd_data;
-    done = 1;
-    WDC_ReadAddr32(hDev, ALTERA_AD_BAR2, USR_INTR_ADDR, &rd_data);
+void IntHandler(WDC_DEVICE_HANDLE hDev_0, PCI_DRIVER_INT_RESULT *pIntResult) {
+
+    DWORD rd_data = 0, rd_data1 = 0;
+    WDC_ReadAddr32(hDev, ALTERA_AD_BAR2, WPS_INTR_ADDR, &rd_data);
+    WDC_ReadAddr32(hDev, ALTERA_AD_BAR2, USR_INTR_ADDR, &rd_data1);
     if (rd_data == 1) {
-        printf("User interrrupt.\n");
         //clear the interrupt register
+        WDC_WriteAddr32(hDev, ALTERA_AD_BAR2, WPS_INTR_ADDR, 0);
+        printf("WPS send done.\n");
+    }
+    else if (rd_data1 == 1) {
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR2, USR_INTR_ADDR, 0);
+        printf("USR interrupt.\n");
+    }
+    else {
+         printf("Interrupt from DMA write or read operation .\n");
+         done = 1;
     }
 
 }
@@ -621,7 +629,10 @@ BOOL CfgWPSReg(WPS_REG wps_register) {
 
 int DMAOperation(DWORD vendor_id, DWORD device_id) {
     int status;
-    int to_send_frame_num = 10;
+    int to_send_frame_num = 1;
+    
+    int target = 1; // target = 1 from onchip memory; target = 0 from DDR3
+    DWORD onchip_addr_offset = 0x20;
 
     GeneratePatternData(to_send_frame_num, "model", "txt", 1920, 1080);
 
@@ -634,15 +645,20 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
     WPS_REG wps_register;
     wps_register.rsv_reg = 0xffffeeee;
     wps_register.capture_pulse_cycle_reg = 100;
-    //wps_register.start_addr_reg = ONCHIP_MEM_BASE_ADDR_LOW + 0x20;
-    wps_register.start_addr_reg = DDR_MEM_BASE_ADDR_LOW + SECTION_SIZE * start_sec_id;
     wps_register.to_send_total_byte_reg = to_send_frame_num * 1920 * 1080 / 8;
     wps_register.pattern_reg = (1920 << 16) | 1080;
     wps_register.one_frame_byte_reg = 1920 * 1080 / 8;
     wps_register.to_send_frame_num_reg = to_send_frame_num;
-    // wps_register.start_play_reg = (1 << 31 | 1 << 30);
-    wps_register.start_play_reg = (1 << 31);
-
+    if (target == 1) {
+        wps_register.start_play_reg = (1 << 31 | 1 << 30);
+        wps_register.start_addr_reg = ONCHIP_MEM_BASE_ADDR_LOW + 0x20;
+    }
+       
+    else {
+        wps_register.start_addr_reg = DDR_MEM_BASE_ADDR_LOW + SECTION_SIZE * start_sec_id;
+        wps_register.start_play_reg = (1 << 31);
+    }
+       
     // By default, the section starts from section 0, corresponding to FPGA DDR3 address 0x0. Every section size is 0x4000000 bytes
     // The start section can be changed as your wish, but it's better to keep the offet address in the section at 0x00, otherwise it would involves with complicated
     // control logics in FPGA
@@ -656,27 +672,35 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
         }
         if (sec_id == (sec_num - 1)) {
             if (to_send_frame_num_left == 0) {
-                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, 0x0, 0x0, 0);
+                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, 0x0, onchip_addr_offset, target);
                 addr_offset = 128 * wps_register.one_frame_byte_reg;
-                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, addr_offset, 0x0, 0);
+                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, addr_offset, onchip_addr_offset, target);
             }
             else if (to_send_frame_num_left > 128) {
-                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, 0x0, 0x0, 0);
+                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, 0x0, onchip_addr_offset, target);
                 //addr_offset = (to_send_frame_num_left - 128) * wps_register.one_frame_byte_reg;
                 addr_offset = 128 * wps_register.one_frame_byte_reg;
-                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * (to_send_frame_num_left - 128), DMA_SIZE_PER_DESCRIPTOR, addr_offset, 0x0, 0);
+                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * (to_send_frame_num_left - 128), DMA_SIZE_PER_DESCRIPTOR, addr_offset, onchip_addr_offset, target);
             }
             else
-                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * to_send_frame_num_left, DMA_SIZE_PER_DESCRIPTOR, 0x0, 0x0, 0);
+                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * to_send_frame_num_left, DMA_SIZE_PER_DESCRIPTOR, 0x0, onchip_addr_offset, target);
         }
         else {
-            status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, 0x0, 0x0, 0);
+            status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, 0x0, onchip_addr_offset, target);
             addr_offset = 128 * wps_register.one_frame_byte_reg;
-            status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, addr_offset, 0x0, 0);
+            status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, addr_offset, onchip_addr_offset, target);
         }
     }
 
+    status = CfgWPSReg(wps_register);
+    if (status != TRUE) {
+        printf("Fail to configure WPS registers.\n");
+        return 0;
+    }
+    while (1);
+
     // FPGA writes to CPU
+    /*
     int *rd_data_ptr;
     int sec_id = 0;
     status =  SelectSection(sec_id);
@@ -693,12 +717,14 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
 
     double duration_mem_copy = (double)(t2 - t1) / CLOCKS_PER_SEC;
     double duration_dma_write_read = (double)(t3 - t2) / CLOCKS_PER_SEC;
-    printf("Mem copy is %f seconds\n", duration_mem_copy);
+    printf("----------------- Performace Report ------------------------\n");
+    printf("Mem copy is %f seconds.\n", duration_mem_copy);
     double mem_copy_rate = to_send_frame_num * DMA_SIZE_PER_DESCRIPTOR / duration_mem_copy / 1e6;
     printf("Memory copy rate is %f MByte/s\n", mem_copy_rate);
 
     printf("DMA write and read is %f seconds\n", duration_dma_write_read);
     double byte_rate = to_send_frame_num * DMA_SIZE_PER_DESCRIPTOR / duration_dma_write_read / 1e6;
     printf("DMA write and read rate is %f MByte/s\n", byte_rate);
+    */
     return status;
 }
