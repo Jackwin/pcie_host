@@ -11,6 +11,8 @@ WD_DMA *pDMA_memory_space;
 clock_t t1, t2, t3;
 double  duration;
 int done = 0;
+int wps_ctrl_done = 0;
+int usr_int_flag = 0;
 
 
 DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr, WD_DMA **ppDMA_rd_buf, WD_DMA **ppDMA_wr_buf) {
@@ -25,7 +27,7 @@ DWORD InitDMABookkeep(WDC_DEVICE_HANDLE hDev, WD_DMA **ppDma, WD_DMA **ppDma_wr,
         printf("Fail to initiate DMAContigBuf.\n");
         printf("status is %x.\n", status);
     }
-    printf("DMA page number is %d.\n", (*ppDma)->dwPages);
+   // printf("DMA page number is %d.\n", (*ppDma)->dwPages);
 
     bk_ptr->numpages = (PAGE_SIZE >= MAX_NUM_DWORDS * 4) ? 1 : (int)((MAX_NUM_DWORDS * 4) / PAGE_SIZE);
 
@@ -251,8 +253,8 @@ int FPGAReadFromCPU(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int 
         mem_addr_h = (mem_start_addr >> 32) & 0xffffffff;
         mem_addr_l = mem_start_addr & 0xffffffff;
         dma_dword = (current_page_size) / 4; // Dword number
-        printf("FPGA addrh is %x, and addrl is %x. CPU addrh is %x, CPU addrl is %x.\n", mem_addr_h, mem_addr_l, rd_buf_phy_addr_h, rd_buf_phy_addr_l);
-        printf("Set descriptor %d.\n", dt_index);
+       // printf("FPGA addrh is %x, and addrl is %x. CPU addrh is %x, CPU addrl is %x.\n", mem_addr_h, mem_addr_l, rd_buf_phy_addr_h, rd_buf_phy_addr_l);
+       // printf("Set descriptor %d.\n", dt_index);
         SetDescTable(&(bk_ptr->lite_table_rd_cpu_virt_addr.descriptors[dt_index]), rd_buf_phy_addr_h, rd_buf_phy_addr_l, mem_addr_h, mem_addr_l, dma_dword, dt_index);
     }
 
@@ -269,7 +271,7 @@ int FPGAReadFromCPU(DWORD vendor_id, DWORD device_id, int *source_data_ptr, int 
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_TABLE_SIZE, last_id);
         WDC_WriteAddr32(hDev, ALTERA_AD_BAR0, ALTERA_LITE_DMA_RD_LAST_PTR, last_id);
 
-        printf("Last_id is %d.\n", last_id);
+       // printf("Last_id is %d.\n", last_id);
         timeout = TIMEOUT;
 
         while (1) {
@@ -544,12 +546,15 @@ void IntHandler(WDC_DEVICE_HANDLE hDev_0, PCI_DRIVER_INT_RESULT *pIntResult) {
     WDC_ReadAddr32(hDev, ALTERA_AD_BAR2, USR_INTR_ADDR, &rd_data1);
     if (rd_data == 1) {
         //clear the interrupt register
-        WDC_WriteAddr32(hDev, ALTERA_AD_BAR2, WPS_INTR_ADDR, 0);
+       // WDC_WriteAddr32(hDev, ALTERA_AD_BAR2, WPS_INTR_ADDR, 0);
+        wps_ctrl_done = 1;
+        rd_data = 0;
         printf("WPS send done.\n");
     }
     else if (rd_data1 == 1) {
-        WDC_WriteAddr32(hDev, ALTERA_AD_BAR2, USR_INTR_ADDR, 0);
+      //  WDC_WriteAddr32(hDev, ALTERA_AD_BAR2, USR_INTR_ADDR, 0);
         printf("USR interrupt.\n");
+        rd_data1 = 0;
     }
     else {
          printf("Interrupt from DMA write or read operation .\n");
@@ -630,14 +635,12 @@ BOOL CfgWPSReg(WPS_REG wps_register) {
 int DMAOperation(DWORD vendor_id, DWORD device_id) {
     int status;
     int to_send_frame_num = 1;
-    
-    int target = 1; // target = 1 from onchip memory; target = 0 from DDR3
+
+    int target = 0; // target = 1 from onchip memory; target = 0 from DDR3
     DWORD onchip_addr_offset = 0x20;
-
+  
     GeneratePatternData(to_send_frame_num, "model", "txt", 1920, 1080);
-
     int start_sec_id = 0;
-
     // Every FPGA DDR3 section can store 256 1920x1080 patterns(frames). Here to get the section number and the left patterns/frames
     int sec_num = to_send_frame_num % 256 == 0 ? to_send_frame_num / 256 : to_send_frame_num / 256 + 1;
     int to_send_frame_num_left =  to_send_frame_num % 256;
@@ -653,12 +656,12 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
         wps_register.start_play_reg = (1 << 31 | 1 << 30);
         wps_register.start_addr_reg = ONCHIP_MEM_BASE_ADDR_LOW + 0x20;
     }
-       
+
     else {
         wps_register.start_addr_reg = DDR_MEM_BASE_ADDR_LOW + SECTION_SIZE * start_sec_id;
         wps_register.start_play_reg = (1 << 31);
     }
-       
+
     // By default, the section starts from section 0, corresponding to FPGA DDR3 address 0x0. Every section size is 0x4000000 bytes
     // The start section can be changed as your wish, but it's better to keep the offet address in the section at 0x00, otherwise it would involves with complicated
     // control logics in FPGA
@@ -692,15 +695,21 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
         }
     }
 
+    // If test the performance, comment the following code
+    
     status = CfgWPSReg(wps_register);
     if (status != TRUE) {
         printf("Fail to configure WPS registers.\n");
         return 0;
     }
-    while (1);
+    // Wait the wps controller done
+    while (!wps_ctrl_done);
+    wps_ctrl_done = 0;
+    WDC_WriteAddr32(hDev, ALTERA_AD_BAR2, WPS_INTR_ADDR, 0);
+
 
     // FPGA writes to CPU
-    /*
+    
     int *rd_data_ptr;
     int sec_id = 0;
     status =  SelectSection(sec_id);
@@ -708,7 +717,7 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
         printf("Fail to select section %d.\n", sec_id);
         return;
     }
-    rd_data_ptr = FPGAWriteToCPU(DMA_SIZE_PER_DESCRIPTOR * to_send_frame_num, DMA_SIZE_PER_DESCRIPTOR, 0, 0, 0);
+    rd_data_ptr = FPGAWriteToCPU(DMA_SIZE_PER_DESCRIPTOR * to_send_frame_num, DMA_SIZE_PER_DESCRIPTOR, 0, onchip_addr_offset, target);
     for (int k = 0; k < 16; k++)
         printf("data is %x.\n", *(rd_data_ptr + k));
 
@@ -725,6 +734,7 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
     printf("DMA write and read is %f seconds\n", duration_dma_write_read);
     double byte_rate = to_send_frame_num * DMA_SIZE_PER_DESCRIPTOR / duration_dma_write_read / 1e6;
     printf("DMA write and read rate is %f MByte/s\n", byte_rate);
-    */
+
     return status;
+    
 }

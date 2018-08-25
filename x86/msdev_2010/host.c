@@ -34,19 +34,12 @@ int main() {
     card.vendor_id = VENDOR_ID;
     card.device_id = DEVICE_ID;
     card.num = 1;
+    printf("\n--------------------- WPS controller system ---------------\n");
+
+	printf(">> long size is %d bytes, double size is %d bytes, int size is %d bytes.\n", sizeof(long), sizeof(double), sizeof(int));
+	printf(">> word size is %d bytes, dword size is %d bytes.\n", sizeof(WORD), sizeof(DWORD));
+    printf(">> Application accesses hardware using " WD_PROD_NAME ".\n");
     printf("\n");
-
-	printf("long size is %d.\n", sizeof(long));
-	printf("double size is %d.\n", sizeof(double));
-	printf("int size is %d.\n", sizeof(int));
-	printf("word size is %d.\n", sizeof(WORD));
-	printf("dword size is %d.\n", sizeof(DWORD));
-
-   // DWORD card_num = ALTERA_CountCards(VENDOR_ID, DEVICE_ID);
-   // printf("%d Altera cards found.\n", card_num);
-    printf("ALTERA diagnostic utility.\n");
-    printf("Application accesses hardware using " WD_PROD_NAME ".\n");
-
     /*     DWORD status = ALTERA_DMABlock(hALTERA,FALSE, VENDOR_ID, DEVICE_ID);
      if (!status) {
          printf("Fail to Read Altera Device.\n");
