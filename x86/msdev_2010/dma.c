@@ -656,23 +656,23 @@ int DMAOperation(DWORD vendor_id, DWORD device_id) {
         }
         if (sec_id == (sec_num - 1)) {
             if (to_send_frame_num_left == 0) {
-                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, 0x0, 0x0, 0);
+                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(&dmd_pattern_data[sec_id * 256]), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, 0x0, 0x0, 0);
                 addr_offset = 128 * wps_register.one_frame_byte_reg;
-                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, addr_offset, 0x0, 0);
+                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(&dmd_pattern_data[sec_id * 256 + 128]), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, addr_offset, 0x0, 0);
             }
             else if (to_send_frame_num_left > 128) {
-                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, 0x0, 0x0, 0);
+                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(&dmd_pattern_data[sec_id * 256]), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, 0x0, 0x0, 0);
                 //addr_offset = (to_send_frame_num_left - 128) * wps_register.one_frame_byte_reg;
                 addr_offset = 128 * wps_register.one_frame_byte_reg;
-                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * (to_send_frame_num_left - 128), DMA_SIZE_PER_DESCRIPTOR, addr_offset, 0x0, 0);
+                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(&dmd_pattern_data[sec_id * 256 + 128]), sizeof(DMD_PATTERN) * (to_send_frame_num_left - 128), DMA_SIZE_PER_DESCRIPTOR, addr_offset, 0x0, 0);
             }
             else
-                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * to_send_frame_num_left, DMA_SIZE_PER_DESCRIPTOR, 0x0, 0x0, 0);
+                status = FPGAReadFromCPU(vendor_id, device_id, (int *)(&dmd_pattern_data[sec_id * 256]), sizeof(DMD_PATTERN) * to_send_frame_num_left, DMA_SIZE_PER_DESCRIPTOR, 0x0, 0x0, 0);
         }
         else {
-            status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, 0x0, 0x0, 0);
+            status = FPGAReadFromCPU(vendor_id, device_id, (int *)(&dmd_pattern_data[sec_id * 256]), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, 0x0, 0x0, 0);
             addr_offset = 128 * wps_register.one_frame_byte_reg;
-            status = FPGAReadFromCPU(vendor_id, device_id, (int *)(dmd_pattern_data), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, addr_offset, 0x0, 0);
+            status = FPGAReadFromCPU(vendor_id, device_id, (int *)(&dmd_pattern_data[sec_id * 256 + 128]), sizeof(DMD_PATTERN) * 128, DMA_SIZE_PER_DESCRIPTOR, addr_offset, 0x0, 0);
         }
     }
 
